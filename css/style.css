@@ -421,3 +421,84 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
   }
 }
 }
+/* ========================================================
+   FIX: UNTRAP HEADER & MOBILE NAVIGATION DRAWER
+   ======================================================== */
+
+/* 1. Ensure the header container never clips its dropdown */
+header, 
+.site-header, 
+.navbar, 
+nav {
+  overflow: visible !important; /* CRITICAL: Prevents menu scrolling inside header */
+}
+
+/* 2. Responsive mobile navigation drawer */
+@media screen and (max-width: 900px) {
+  
+  /* Target the nav container when open/active */
+  .nav-links,
+  .nav-menu,
+  nav ul,
+  .mobile-menu {
+    position: fixed !important;
+    top: 60px !important;                 /* Starts right below the top navigation bar */
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    height: auto !important;
+    min-height: calc(100vh - 60px) !important;
+    
+    /* Solid opaque background to block out any text beneath */
+    background: #090d16 !important;
+    background-color: #090d16 !important;
+    
+    /* Layout & Positioning */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 30px 20px !important;
+    gap: 16px !important;
+    
+    /* Lift strictly above hero titles and body content */
+    z-index: 999999 !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* 3. Strict typography reset for the 4 menu links */
+  .nav-links a,
+  .nav-menu a,
+  nav ul li a,
+  .mobile-menu a {
+    font-size: 16px !important;           /* Fixed, clean, readable size */
+    line-height: 1.4 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    text-transform: none !important;
+    color: #f1f5f9 !important;            /* Clean crisp white */
+    text-decoration: none !important;
+    
+    /* Touch Target Button Style */
+    display: block !important;
+    width: 100% !important;
+    max-width: 280px !important;
+    padding: 12px 16px !important;
+    text-align: center !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  /* Tap & Hover states */
+  .nav-links a:hover,
+  .nav-links a:active,
+  .nav-menu a:hover,
+  .nav-menu a:active {
+    background: rgba(56, 189, 248, 0.12) !important;
+    color: #38bdf8 !important;            /* ANKA cyan accent */
+    border-color: #38bdf8 !important;
+  }
+}
