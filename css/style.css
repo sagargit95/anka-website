@@ -502,3 +502,36 @@ nav {
     border-color: #38bdf8 !important;
   }
 }
+/* Ensure box-sizing applies to every element */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Prevent horizontal overflow and enable fluid scaling */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* Stops horizontal side-scrolling */
+  margin: 0;
+  padding: 0;
+}
+
+/* Make images, canvas, videos, and svg fluid */
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Ensure main containers shrink cleanly on mobile */
+.container, 
+.wrapper, 
+main, 
+section, 
+.hero {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding-left: clamp(16px, 4vw, 24px);
+  padding-right: clamp(16px, 4vw, 24px);
+}
