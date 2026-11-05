@@ -294,23 +294,24 @@ async function loadRecordedClasses() {
   videoGrid.innerHTML = '';
 
   recordings.forEach(rec => {
-    const card = document.createElement('article');
-    card.className = 'card';
-    card.innerHTML = `
-      <div class="pill" style="margin-bottom: 0.5rem;">${rec.class_grade} · ${rec.subject}</div>
-      <h3 class="h3">${rec.title}</h3>
-      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; margin-top: 1rem; border: 1px solid var(--line);">
-        <iframe 
-          src="https://drive.google.com/file/d/${rec.drive_file_id}/preview" 
-          style="position: absolute; top:0; left: 0; width: 100%; height: 100%; border: 0;" 
-          allow="autoplay" 
-          allowfullscreen>
-        </iframe>
-      </div>
-    `;
-    videoGrid.appendChild(card);
-  });
-}
-
-// Call upon successful login
-loadRecordedClasses();
+  const card = document.createElement('article');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="pill" style="margin-bottom: 0.5rem;">${rec.class_grade} · ${rec.subject}</div>
+    <h3 class="h3">${rec.title}</h3>
+    
+    <div class="video-secure-wrap" oncontextmenu="return false;">
+      <!-- Transparent click barrier covering the top-right Drive popout button -->
+      <div class="video-shield-top" title="Playback only"></div>
+      
+      <!-- Sandboxed Drive preview player -->
+      <iframe 
+        src="https://drive.google.com/file/d/${rec.drive_file_id}/preview" 
+        sandbox="allow-scripts allow-same-origin"
+        allow="autoplay; encrypted-media" 
+        allowfullscreen>
+      </iframe>
+    </div>
+  `;
+  videoGrid.appendChild(card);
+});
