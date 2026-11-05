@@ -80,6 +80,24 @@
   
   <div id="videoGrid" class="grid-3" style="display: none; margin-top: 1.5rem;">
     <!-- Approved videos will render here -->
+    <!-- Secure Video Player Container -->
+<div class="video-card">
+  <h3 class="video-title">Class Recording: Prisms &amp; Cylinders</h3>
+  
+  <div class="video-shield-wrapper" oncontextmenu="return false;">
+    <!-- Click blocker over the Drive top header (pop-out icon) -->
+    <div class="drive-click-shield" title="Video playback only"></div>
+
+    <!-- Sandboxed Google Drive Preview Player -->
+    <iframe 
+      id="videoPlayer"
+      src="https://drive.google.com/file/d/YOUR_DRIVE_FILE_ID/preview" 
+      sandbox="allow-scripts allow-same-origin"
+      allow="autoplay; encrypted-media" 
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
   </div>
 </section>
     
