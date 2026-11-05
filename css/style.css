@@ -440,3 +440,37 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
   .table-wrap{max-width:100%}
   .foot-bottom{flex-direction:column}
 }
+/* Secure Video Player Wrapper */
+.video-secure-wrap {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #000;
+  border: 1px solid var(--line);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.video-secure-wrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Invisible shield blocking the top Drive popout and open-in-new-tab buttons */
+.video-shield-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 54px;
+  z-index: 10;
+  background: transparent;
+  pointer-events: auto; /* Catches all clicks intended for the Drive header bar */
+}
