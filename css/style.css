@@ -351,74 +351,73 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
 .st-cancelled{background:color-mix(in srgb,var(--bad) 18%,transparent);border-color:var(--bad)}
 .link-btn{background:none;border:0;padding:0;margin-top:.5rem;color:var(--bad);font:600 .84rem Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
-/* Typography base */
-body, nav, a, button {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-/* Ensure the fixed/sticky top navigation bar stays above everything */
-header, .site-header, nav {
-  position: relative;
-  z-index: 10000;
-}
-
-/* --- Mobile Navigation Drawer Fix --- */
-@media (max-width: 768px) {
-  /* Target your mobile menu container (adjust selector to match your HTML class) */
-  .nav-menu.active,
-  .mobile-menu.open,
-  nav.active ul,
-  #navMenu.active {
+/* Responsive Mobile Navigation Drawer & Font Size Calibration */
+@media screen and (max-width: 768px) {
+  /* 1. Reset the mobile menu drawer container */
+  .nav-menu,
+  nav ul,
+  .mobile-menu,
+  #navMenu {
     position: fixed;
-    top: 64px;                          /* Directly under the logo bar */
+    top: 60px;                           /* Sits cleanly below your logo bar */
     left: 0;
-    width: 100vw;
-    min-height: calc(100vh - 64px);     /* Cover the screen cleanly */
+    width: 100%;
+    height: auto;
+    max-height: 85vh;
+    overflow-y: auto;
     
-    /* Solid, rich dark background with frosted glass blur */
-    background: rgba(10, 14, 23, 0.96); 
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    /* Solid opaque dark backdrop to prevent overlapping underlying hero text */
+    background-color: #0d1117 !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     
+    /* Layout and Spacing */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding-top: 40px;
-    gap: 20px;
-    z-index: 9999;                      /* Stays strictly on top of hero headings */
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 24px 16px 32px 16px;
+    gap: 12px;                          /* Keeps items neatly separated without huge gaps */
+    z-index: 99999 !important;          /* Stays strictly on top */
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  /* Style the navigation links inside the drawer */
+  /* 2. Fix the link font sizing: clamp between 15px and 17px */
   .nav-menu a,
+  nav ul li a,
   .mobile-menu a,
-  nav ul li a {
-    font-size: 1.25rem;                 /* 20px clear, readable size */
-    font-weight: 600;                   /* Bold enough for high contrast */
-    color: #e2e8f0;                     /* Crisp off-white */
+  #navMenu a {
+    font-size: clamp(0.95rem, 4vw, 1.05rem) !important; /* ~15px to 17px, never massive */
+    font-weight: 500 !important;                        /* Medium weight prevents bulky text */
+    letter-spacing: 0.01em;
+    color: #e6edf3 !important;
     text-decoration: none;
-    letter-spacing: -0.01em;
-    padding: 12px 28px;
-    width: 80%;
+    
+    display: block;
+    width: 90%;
+    max-width: 300px;
+    padding: 10px 16px;
     text-align: center;
-    border-radius: 12px;
-    transition: all 0.2s ease;
+    border-radius: 8px;
+    background: transparent;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  /* Interactive touch / hover state */
+  /* 3. Subtle tap highlight for mobile screens */
   .nav-menu a:hover,
-  .nav-menu a:active {
-    background: rgba(255, 255, 255, 0.08);
-    color: #38bdf8;                     /* Cyan glow matching ANKA's theme */
+  .nav-menu a:active,
+  nav ul li a:active {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #38bdf8 !important;                          /* ANKA cyan accent */
   }
 
-  /* Optional CTA button in dropdown (e.g. Login or Demo) */
-  .nav-menu .btn,
-  .nav-menu a.cta {
-    background: linear-gradient(135deg, #6366f1, #06b6d4);
-    color: #ffffff;
-    font-weight: 700;
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+  /* 4. Special styling for Challenge / Login CTA if styled as a button */
+  .nav-menu a.btn,
+  .nav-menu a[href*="login"],
+  .nav-menu a[href*="challenge"] {
+    font-weight: 600 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12);
   }
+}
 }
