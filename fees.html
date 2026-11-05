@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fees & Fee Calculator | ANKA by SAGAR</title>
+<meta name="description" content="See your exact monthly tuition fee in seconds. Group batches and one-to-one classes, with combo discounts for multiple subjects.">
+<link rel="canonical" href="https://nsagar.com.np/fees.html">
+<meta property="og:title" content="Fees & Fee Calculator | ANKA by SAGAR"><meta property="og:description" content="See your exact monthly tuition fee in seconds. Group batches and one-to-one classes, with combo discounts for multiple subjects."><meta property="og:type" content="website"><meta property="og:site_name" content="ANKA by SAGAR">
+<meta name="theme-color" content="#07070d">
+<link rel="icon" href="favicon.ico" sizes="48x48"><link rel="icon" href="img/favicon-32.png" type="image/png" sizes="32x32"><link rel="apple-touch-icon" href="img/apple-touch-icon.png"><meta property="og:image" content="https://nsagar.com.np/img/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Noto+Sans+Devanagari:wght@600&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem('anka-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+<body data-page="fees">
+<a class="skip" href="#main">Skip to content</a>
+<div class="bg-fx" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="progress" aria-hidden="true"></div>
+<header class="site-header"><nav class="nav container" aria-label="Main">
+<a class="brand" href="index.html" aria-label="ANKA by Sagar, home"><img class="logo logo-dk" src="img/logo-dark.png" alt="ANKA" width="68" height="48"><img class="logo logo-lt" src="img/logo.png" alt="ANKA" width="68" height="48"><small class="brand-by">by SAGAR</small></a>
+<ul class="nav-links" id="navLinks"><li><a href="index.html">Home</a></li><li><a href="courses.html">Courses</a></li><li><a href="fees.html" aria-current="page">Fees</a></li><li><a href="challenge.html">Challenge</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li><li><a href="login.html" data-auth-link>Login</a></li></ul>
+<div class="nav-actions">
+<button class="icon-btn" id="paletteBtn" type="button" aria-label="Open quick menu"><kbd>Ctrl K</kbd></button>
+<button class="icon-btn theme-toggle" type="button" aria-label="Switch light or dark theme" aria-pressed="false">
+<svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.800z"/></svg>
+<svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.900 4.900l1.400 1.400M17.700 17.700l1.400 1.400M2 12h2M20 12h2M4.900 19.100l1.400-1.400M17.700 6.300l1.400-1.400"/></svg>
+</button>
+<a class="btn btn-primary btn-sm nav-cta" href="contact.html">Free demo</a>
+<button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+</div></nav></header>
+<main id="main">
+<section class="page-hero">
+  <div class="container">
+    <span class="eyebrow" data-reveal>Fees</span>
+    <h1 class="h1" data-reveal>Know your fee before you ask.</h1>
+    <p class="lead" data-reveal>Move the sliders and see your monthly fee instantly. Your first demo class is always free.</p>
+  </div>
+</section>
+
+<section style="padding-top:1rem">
+  <div class="container">
+    <div class="calc" id="calc">
+      <div class="card" data-reveal>
+        <div class="field">
+          <span class="lab">How would you like to learn?</span>
+          <div class="seg" id="modeSeg" role="group" aria-label="Class type">
+            <button type="button" data-mode="group" aria-pressed="true">Group batch</button>
+            <button type="button" data-mode="one" aria-pressed="false">One-to-one</button>
+          </div>
+        </div>
+        <div class="field"><label for="cLevel">Class</label><select id="cLevel"></select></div>
+        <div class="field mode-only" data-mode="group"><label for="cSubjects">Number of subjects <output id="oSubjects">2</output></label><input type="range" id="cSubjects" min="1" max="5" value="2"></div>
+        <div class="field mode-only" data-mode="one" hidden><label for="cClasses">Classes per week <output id="oClasses">2</output></label><input type="range" id="cClasses" min="1" max="6" value="2"></div>
+        <p class="muted" style="font-size:.88rem">Fees shown are estimates. We confirm the exact amount when you join.</p>
+      </div>
+      <div class="card result" data-reveal aria-live="polite">
+        <span class="muted">Estimated monthly fee</span>
+        <div class="big" id="cTotal">Rs. 0</div>
+        <div class="save" id="cSave"></div>
+        <div class="small" id="cNote"></div>
+        <a class="btn btn-primary" id="cBook" data-magnetic href="contact.html" style="margin-top:1rem">Book a free demo with this plan</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="section-head" data-reveal><span class="eyebrow">What's included</span><h2 class="h2">Every plan comes with the essentials</h2></div>
+    <div class="grid-3">
+      <article class="card" data-reveal><div class="ico">🎥</div><h3 class="h3">Live classes + recordings</h3><p>Join live on Zoom or Google Meet and rewatch any class later.</p></article>
+      <article class="card" data-reveal><div class="ico">📝</div><h3 class="h3">Tests &amp; practice</h3><p>Weekly tests and practice sets to turn understanding into marks.</p></article>
+      <article class="card" data-reveal><div class="ico">👨‍👩‍👧</div><h3 class="h3">Parent updates</h3><p>Clear progress reports so parents are always in the loop.</p></article>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="container split">
+    <div data-reveal>
+      <span class="eyebrow">Payments</span>
+      <h2 class="h2" style="margin:1rem 0 .9rem">Pay the way that's easiest.</h2>
+      <p class="lead">Monthly fees by <b>eSewa</b>, <b>Khalti</b> or <b>bank transfer</b>. We share the payment details when your batch is confirmed.</p>
+    </div>
+    <div class="faq" data-reveal>
+      <details><summary>Is there a joining or hidden fee?</summary><p>No. You pay only the monthly fee shown by the calculator once your batch is confirmed.</p></details>
+      <details><summary>Can I change my plan later?</summary><p>Yes. Add or drop a subject or switch to one-to-one next month, just let us know.</p></details>
+      <details><summary>What if we are not happy after the first month?</summary><p>Tell us. We will fix the issue or help you find a better fit. Your demo class is free so you can decide with confidence.</p></details>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer"><div class="container">
+<div class="foot-grid">
+<div class="foot-brand"><img class="logo logo-dk" src="img/logo-dark.png" alt="ANKA" width="91" height="64"><img class="logo logo-lt" src="img/logo.png" alt="ANKA" width="91" height="64"><p>by SAGAR. Live online tuition that makes numbers, science and English click.</p></div>
+<div><h4>Explore</h4><ul><li><a href="courses.html">Courses</a></li><li><a href="fees.html">Fees &amp; calculator</a></li><li><a href="challenge.html">Math challenge</a></li><li><a href="about.html">About</a></li></ul></div>
+<div><h4>Start</h4><ul><li><a href="contact.html">Book a free demo</a></li><li><a href="login.html" data-auth-footer>Student login</a></li><li><a data-wa href="https://wa.me/9779800000000">WhatsApp</a></li><li><a data-email href="mailto:info@nsagar.com.np">info@nsagar.com.np</a></li></ul></div>
+<div><h4>Call</h4><ul><li><a data-phone href="tel:+9779800000000">+977 98XXXXXXXX</a></li><li class="muted">Online classes · Nepal</li></ul></div>
+</div>
+<div class="foot-bottom"><span>© <span data-year>2026</span> ANKA by SAGAR. All rights reserved.</span><span>nsagar.com.np</span></div>
+</div></footer>
+<a class="wa-float" data-wa href="https://wa.me/9779800000000" aria-label="Chat on WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9.5L5 22v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm3 5v1.500h10V8zm0 4v1.500h7V12z"/></svg></a>
+<script src="js/config.js"></script>
+<script src="js/main.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

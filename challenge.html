@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>60-Second Math Challenge | ANKA by SAGAR</title>
+<meta name="description" content="Play the free ANKA mental maths challenge. Three levels, streak bonuses and a personal best to beat. Share your score on WhatsApp.">
+<link rel="canonical" href="https://nsagar.com.np/challenge.html">
+<meta property="og:title" content="60-Second Math Challenge | ANKA by SAGAR"><meta property="og:description" content="Play the free ANKA mental maths challenge. Three levels, streak bonuses and a personal best to beat. Share your score on WhatsApp."><meta property="og:type" content="website"><meta property="og:site_name" content="ANKA by SAGAR">
+<meta name="theme-color" content="#07070d">
+<link rel="icon" href="favicon.ico" sizes="48x48"><link rel="icon" href="img/favicon-32.png" type="image/png" sizes="32x32"><link rel="apple-touch-icon" href="img/apple-touch-icon.png"><meta property="og:image" content="https://nsagar.com.np/img/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Noto+Sans+Devanagari:wght@600&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem('anka-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+<body data-page="challenge">
+<a class="skip" href="#main">Skip to content</a>
+<div class="bg-fx" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="progress" aria-hidden="true"></div>
+<header class="site-header"><nav class="nav container" aria-label="Main">
+<a class="brand" href="index.html" aria-label="ANKA by Sagar, home"><img class="logo logo-dk" src="img/logo-dark.png" alt="ANKA" width="68" height="48"><img class="logo logo-lt" src="img/logo.png" alt="ANKA" width="68" height="48"><small class="brand-by">by SAGAR</small></a>
+<ul class="nav-links" id="navLinks"><li><a href="index.html">Home</a></li><li><a href="courses.html">Courses</a></li><li><a href="fees.html">Fees</a></li><li><a href="challenge.html" aria-current="page">Challenge</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li><li><a href="login.html" data-auth-link>Login</a></li></ul>
+<div class="nav-actions">
+<button class="icon-btn" id="paletteBtn" type="button" aria-label="Open quick menu"><kbd>Ctrl K</kbd></button>
+<button class="icon-btn theme-toggle" type="button" aria-label="Switch light or dark theme" aria-pressed="false">
+<svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.800z"/></svg>
+<svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.900 4.900l1.400 1.400M17.700 17.700l1.400 1.400M2 12h2M20 12h2M4.900 19.100l1.400-1.400M17.700 6.300l1.400-1.400"/></svg>
+</button>
+<a class="btn btn-primary btn-sm nav-cta" href="contact.html">Free demo</a>
+<button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+</div></nav></header>
+<main id="main">
+<section class="page-hero">
+  <div class="container">
+    <span class="eyebrow" data-reveal>Free game</span>
+    <h1 class="h1" data-reveal>The 60-second <span class="grad-text">math challenge</span></h1>
+    <p class="lead" data-reveal>Answer as many as you can before time runs out. Streaks earn bonus points. Press Enter to submit.</p>
+  </div>
+</section>
+
+<section style="padding-top:1rem">
+  <div class="narrow">
+    <div class="card game" id="game" data-reveal>
+      <div class="game-top">
+        <div class="seg" id="lvlSeg" role="group" aria-label="Level">
+          <button type="button" data-level="easy" aria-pressed="true">Easy</button>
+          <button type="button" data-level="medium" aria-pressed="false">Medium</button>
+          <button type="button" data-level="hard" aria-pressed="false">Hard</button>
+        </div>
+        <div class="game-stats" aria-live="polite">
+          <span>Time<b id="gTime">60</b></span><span>Score<b id="gScore">0</b></span><span>Streak<b id="gStreak">0</b></span><span>Best<b id="gBest">0</b></span>
+        </div>
+      </div>
+      <div class="timebar" aria-hidden="true"><i id="gBar"></i></div>
+      <div class="game-stage" id="gStage" data-state="idle">
+        <div class="g-idle">
+          <h2 class="h2" style="margin-bottom:.8rem">Ready?</h2>
+          <p class="muted" style="margin-bottom:1.6rem">Pick a level, then press start. The clock begins immediately.</p>
+          <button class="btn btn-primary" type="button" data-start data-magnetic>Start challenge</button>
+        </div>
+        <div class="g-play">
+          <div class="g-q" id="gQ" aria-live="polite">—</div>
+          <div class="g-row">
+            <input class="g-in" id="gIn" type="text" inputmode="numeric" autocomplete="off" aria-label="Your answer" placeholder="?">
+            <button class="btn btn-primary" id="gCheck" type="button">Check</button>
+            <button class="btn btn-ghost" id="gSkip" type="button">Skip</button>
+          </div>
+          <div class="g-fb" id="gFb" role="status"></div>
+        </div>
+        <div class="g-done">
+          <p class="muted">Time's up! Your score</p>
+          <div class="big" id="gFinal">0</div>
+          <p id="gSummary"></p>
+          <div class="g-row">
+            <button class="btn btn-primary" type="button" data-start>Play again</button>
+            <a class="btn btn-wa" id="gShare" data-wa href="https://wa.me/9779800000000">Share on WhatsApp</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="container">
+    <div class="grid-3">
+      <article class="card" data-reveal><div class="ico">⚡</div><h3 class="h3">Why mental maths?</h3><p>Quick number sense saves minutes in every exam and makes harder topics feel lighter.</p></article>
+      <article class="card" data-reveal><div class="ico">🔥</div><h3 class="h3">Streak bonus</h3><p>Every correct answer in a row adds extra points. One mistake resets your streak.</p></article>
+      <article class="card" data-reveal><div class="ico">🏆</div><h3 class="h3">Beat your best</h3><p>Your best score for each level is saved on this device. Challenge a friend to beat it.</p></article>
+    </div>
+    <div class="cta-band" style="margin-top:clamp(2rem,5vw,4rem)" data-reveal>
+      <h2 class="h2">Want to get this fast in class too?</h2>
+      <p class="lead">Join a free demo class and see how we teach number sense.</p>
+      <div class="cta-row"><a class="btn btn-primary" data-magnetic href="contact.html">Book a free demo</a></div>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer"><div class="container">
+<div class="foot-grid">
+<div class="foot-brand"><img class="logo logo-dk" src="img/logo-dark.png" alt="ANKA" width="91" height="64"><img class="logo logo-lt" src="img/logo.png" alt="ANKA" width="91" height="64"><p>by SAGAR. Live online tuition that makes numbers, science and English click.</p></div>
+<div><h4>Explore</h4><ul><li><a href="courses.html">Courses</a></li><li><a href="fees.html">Fees &amp; calculator</a></li><li><a href="challenge.html">Math challenge</a></li><li><a href="about.html">About</a></li></ul></div>
+<div><h4>Start</h4><ul><li><a href="contact.html">Book a free demo</a></li><li><a href="login.html" data-auth-footer>Student login</a></li><li><a data-wa href="https://wa.me/9779800000000">WhatsApp</a></li><li><a data-email href="mailto:info@nsagar.com.np">info@nsagar.com.np</a></li></ul></div>
+<div><h4>Call</h4><ul><li><a data-phone href="tel:+9779800000000">+977 98XXXXXXXX</a></li><li class="muted">Online classes · Nepal</li></ul></div>
+</div>
+<div class="foot-bottom"><span>© <span data-year>2026</span> ANKA by SAGAR. All rights reserved.</span><span>nsagar.com.np</span></div>
+</div></footer>
+<a class="wa-float" data-wa href="https://wa.me/9779800000000" aria-label="Chat on WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9.5L5 22v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm3 5v1.500h10V8zm0 4v1.500h7V12z"/></svg></a>
+<script src="js/config.js"></script>
+<script src="js/main.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>My account | ANKA by SAGAR</title>
+  <meta name="description" content="Your ANKA student account: book classes and track your bookings.">
+  <link rel="canonical" href="https://nsagar.com.np/account.html">
+  <meta name="robots" content="noindex, follow">
+  <meta name="theme-color" content="#07070d">
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="icon" href="img/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <meta property="og:image" content="https://nsagar.com.np/img/og-image.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Noto+Sans+Devanagari:wght@600&display=swap"
+    rel="stylesheet">
+  <script>try { var t = localStorage.getItem('anka-theme'); if (t) document.documentElement.setAttribute('data-theme', t) } catch (e) { } document.documentElement.classList.add('js')</script>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body data-page="account">
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="bg-fx" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="progress" aria-hidden="true"></div>
+  <header class="site-header">
+    <nav class="nav container" aria-label="Main">
+      <a class="brand" href="index.html" aria-label="ANKA by Sagar, home"><img class="logo logo-dk"
+          src="img/logo-dark.png" alt="ANKA" width="68" height="48"><img class="logo logo-lt" src="img/logo.png"
+          alt="ANKA" width="68" height="48"><small class="brand-by">by SAGAR</small></a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="courses.html">Courses</a></li>
+        <li><a href="fees.html">Fees</a></li>
+        <li><a href="challenge.html">Challenge</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="login.html" data-auth-link>Login</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="icon-btn" id="paletteBtn" type="button" aria-label="Open quick menu"><kbd>Ctrl K</kbd></button>
+        <button class="icon-btn theme-toggle" type="button" aria-label="Switch light or dark theme"
+          aria-pressed="false">
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.800z" />
+          </svg>
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round">
+            <circle cx="12" cy="12" r="4" />
+            <path
+              d="M12 2v2M12 20v2M4.900 4.900l1.400 1.400M17.700 17.700l1.400 1.400M2 12h2M20 12h2M4.900 19.100l1.400-1.400M17.700 6.300l1.400-1.400" />
+          </svg>
+        </button>
+        <a class="btn btn-primary btn-sm nav-cta" href="contact.html">Free demo</a>
+        <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false"
+          aria-controls="navLinks"><span></span><span></span></button>
+      </div>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow" data-reveal>My account</span>
+        <h1 class="h1" data-reveal id="hello">Hello 👋</h1>
+        <p class="lead" data-reveal id="who">Loading your account…</p>
+      </div>
+    </section>
+    <section style="padding-top:1rem">
+      <div class="container acct-grid" id="acct" hidden>
+        <form class="card" id="bookForm" novalidate>
+          <h2 class="h3">Book a class</h2>
+          <div id="bookMsg" style="margin-top:1rem"></div>
+          <span class="l fl">What do you need?</span>
+          <div class="chips"><label class="chip-check"><input type="radio" name="type" value="demo" checked><span>Free
+                demo class</span></label><label class="chip-check"><input type="radio" name="type"
+                value="enrol"><span>Enrol in a course</span></label></div>
+          <div class="row">
+            <div><label class="l" for="bLevel">Class</label><select id="bLevel" name="level">
+                <option>Class 6–8</option>
+                <option>Class 9–10 (SEE)</option>
+                <option>Class 11–12 (+2)</option>
+                <option>Other</option>
+              </select></div>
+            <div><label class="l" for="bTime">Preferred time</label><select id="bTime" name="time">
+                <option>Morning</option>
+                <option>Afternoon</option>
+                <option selected>Evening</option>
+                <option>Flexible</option>
+              </select></div>
+          </div>
+          <span class="l fl">Learning style</span>
+          <div class="chips"><label class="chip-check"><input type="radio" name="mode" value="group" checked><span>Group
+                batch</span></label><label class="chip-check"><input type="radio" name="mode"
+                value="one"><span>One-to-one</span></label></div>
+          <span class="l fl">Subjects</span>
+          <div class="chips"><label class="chip-check"><input type="checkbox" name="subjects"
+                value="Mathematics"><span>Mathematics</span></label><label class="chip-check"><input type="checkbox"
+                name="subjects" value="Optional Maths"><span>Optional Maths</span></label><label
+              class="chip-check"><input type="checkbox" name="subjects"
+                value="Science"><span>Science</span></label><label class="chip-check"><input type="checkbox"
+                name="subjects" value="English"><span>English</span></label><label class="chip-check"><input
+                type="checkbox" name="subjects" value="Computer"><span>Computer</span></label><label
+              class="chip-check"><input type="checkbox" name="subjects"
+                value="Physics"><span>Physics</span></label><label class="chip-check"><input type="checkbox"
+                name="subjects" value="Chemistry"><span>Chemistry</span></label></div>
+          <label class="l" for="bNote">Anything we should know? (optional)</label>
+          <textarea id="bNote" name="note" rows="3" maxlength="500"
+            placeholder="e.g. weak in algebra, SEE this year…"></textarea>
+          <div class="form-actions"><button class="btn btn-primary" type="submit" data-magnetic>Submit booking</button>
+          </div>
+        </form>
+        <div>
+          <div class="card" id="bookingsCard">
+            <h2 class="h3">My bookings</h2>
+            <div id="bookings" class="bk-list">
+              <p class="muted">Loading…</p>
+            </div>
+          </div>
+          <div class="card" style="margin-top:1.2rem">
+            <h2 class="h3">Profile</h2>
+            <p id="profile" class="muted" style="margin-top:.5rem"></p>
+            <div class="form-actions"><button class="btn btn-ghost btn-sm" id="logoutBtn" type="button">Log out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="foot-grid">
+        <div class="foot-brand"><img class="logo logo-dk" src="img/logo-dark.png" alt="ANKA" width="91" height="64"><img
+            class="logo logo-lt" src="img/logo.png" alt="ANKA" width="91" height="64">
+          <p>by SAGAR. Live online tuition that makes numbers, science and English click.</p>
+        </div>
+        <div>
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="courses.html">Courses</a></li>
+            <li><a href="fees.html">Fees &amp; calculator</a></li>
+            <li><a href="challenge.html">Math challenge</a></li>
+            <li><a href="about.html">About</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Start</h4>
+          <ul>
+            <li><a href="contact.html">Book a free demo</a></li>
+            <li><a href="login.html" data-auth-footer>Student login</a></li>
+            <li><a data-wa href="https://wa.me/9779800000000">WhatsApp</a></li>
+            <li><a data-email href="mailto:info@nsagar.com.np">info@nsagar.com.np</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Call</h4>
+          <ul>
+            <li><a data-phone href="tel:+9779800000000">+977 98XXXXXXXX</a></li>
+            <li class="muted">Online classes · Nepal</li>
+          </ul>
+        </div>
+      </div>
+      <div class="foot-bottom"><span>© <span data-year>2026</span> ANKA by SAGAR. All rights
+          reserved.</span><span>nsagar.com.np</span></div>
+    </div>
+  </footer>
+  <a class="wa-float" data-wa href="https://wa.me/9779800000000" aria-label="Chat on WhatsApp"><svg viewBox="0 0 24 24"
+      aria-hidden="true">
+      <path
+        d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9.5L5 22v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm3 5v1.500h10V8zm0 4v1.500h7V12z" />
+    </svg></a>
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,51 @@
+/* ANKA admin panel */
+body.adm{padding-bottom:4rem}
+.a-wrap{width:min(1100px,100% - 2rem);margin-inline:auto}
+.a-top{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg-2) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.a-top-in{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding-block:.5rem}
+.a-brand{display:flex;align-items:center;gap:.6rem}
+.a-brand .logo{height:40px}
+.a-tag{font:700 .68rem Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;padding:.2rem .6rem;border-radius:999px;background:var(--grad);color:#fff}
+.a-tabs{display:flex;gap:.2rem;flex:1;flex-wrap:wrap}
+.a-tabs a{padding:.45rem .9rem;border-radius:999px;font-size:.92rem;font-weight:500;color:var(--muted)}
+.a-tabs a:hover{background:var(--surface-2);color:var(--ink)}
+.a-tabs a[aria-current]{background:var(--surface-2);color:var(--ink)}
+.a-user{display:flex;align-items:center;gap:.7rem;font-size:.9rem}
+.a-main{padding-top:1.5rem}
+.a-narrow{width:min(460px,100%);margin:clamp(1.5rem,6vw,4rem) auto}
+.a-narrow label.l,.a-main label.l{display:block;margin:1rem 0 .4rem;font-weight:600;font-size:.88rem}
+.a-narrow input[type=password],.a-main input[type=password]{width:100%}
+.a-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem;margin-bottom:1.2rem}
+.a-stat{padding:1rem 1.2rem;border-radius:18px;border:1px solid var(--line);background:var(--surface)}
+.a-stat b{display:block;font:800 1.9rem Sora,Inter,system-ui,sans-serif;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.a-stat span{font-size:.82rem;color:var(--muted)}
+.a-filter{display:flex;flex-wrap:wrap;gap:.6rem;margin:.4rem 0 1rem;align-items:center}
+.a-filter select{width:auto}.a-filter input[type=text]{flex:1;min-width:200px;width:auto}
+.a-list{display:grid;gap:1rem;margin-top:.8rem}
+.a-item{padding:1.2rem 1.3rem;border-radius:20px;border:1px solid var(--line);background:var(--surface);position:relative}
+.a-item-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
+.a-item h3{font:700 1.1rem Sora,Inter,system-ui,sans-serif}
+.a-contact{font-size:.9rem;color:var(--muted);margin-top:.2rem;word-break:break-word}
+.a-contact a,.a-main td a{color:var(--c2)}
+.a-meta{display:flex;flex-wrap:wrap;gap:.4rem .5rem;margin:.8rem 0 .3rem;font-size:.85rem}
+.a-meta span{padding:.15rem .65rem;border:1px solid var(--line);border-radius:999px}
+.a-meta span.muted{border-color:transparent;padding-left:0}
+.a-subj{font-weight:600;margin:.3rem 0}
+.a-note{color:var(--muted);font-size:.93rem;margin:.3rem 0}
+.a-edit{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.9rem}
+.a-edit select{width:auto}.a-edit input[type=text]{flex:1;min-width:180px;width:auto}
+.a-pill{padding:.25rem .8rem;border-radius:999px;font-size:.78rem;font-weight:700;white-space:nowrap;border:1px solid transparent}
+.s-pending{background:color-mix(in srgb,var(--c3) 22%,transparent);border-color:var(--c3)}
+.s-confirmed{background:color-mix(in srgb,var(--ok) 20%,transparent);border-color:var(--ok)}
+.s-completed{background:color-mix(in srgb,var(--c2) 18%,transparent);border-color:var(--c2)}
+.s-cancelled{background:color-mix(in srgb,var(--bad) 18%,transparent);border-color:var(--bad)}
+.a-del{margin-top:.7rem;text-align:right}
+.a-acts{display:flex;gap:1rem;flex-wrap:wrap}.a-acts form{display:inline}
+.a-link{background:none;border:0;padding:0;color:var(--c2);font:600 .85rem Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.a-link.bad,.a-del .a-link{color:var(--bad)}
+.a-pager{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1.4rem}
+.a-pager a{padding:.4rem .85rem;border-radius:10px;border:1px solid var(--line)}
+.a-pager a[aria-current]{background:var(--grad);color:#fff;border-color:transparent}
+.adm code{padding:.1rem .4rem;border-radius:6px;background:var(--surface-2);font-size:.88em}
+.adm .alert{word-break:break-word}
+@media(max-width:640px){.a-user{width:100%;justify-content:space-between}}
