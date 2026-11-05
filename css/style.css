@@ -1,4 +1,4 @@
-/* ANKA by SAGAR — design system. Fluid type + fluid spacing, dark/light themes. */
+/* ANKA — design system. Fluid type + fluid spacing, dark/light themes. */
 :root{
   --bg:#07070d;--bg-2:#0e0e1c;--surface:rgba(255,255,255,.045);--surface-2:rgba(255,255,255,.085);
   --line:rgba(255,255,255,.1);--ink:#f5f5fc;--muted:#a6a6c0;
@@ -60,9 +60,9 @@ section{padding-block:var(--section);position:relative}
 @media (hover:none),(pointer:coarse){.cursor{display:none}}
 
 /* header */
-.site-header{position:fixed;top:0;left:0;right:0;z-index:100;padding-top:clamp(.6rem,1.5vw,1rem);transition:transform .35s}
+.site-header{position:fixed;top:0;left:0;right:0;z-index:1000;padding-top:clamp(.6rem,1.5vw,1rem);transition:transform .35s;overflow:visible !important}
 .site-header.hide{transform:translateY(-120%)}
-.nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.55rem .65rem .55rem 1rem;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--bg-2) 72%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.55rem .65rem .55rem 1rem;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--bg-2) 72%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);overflow:visible !important}
 .brand{display:flex;align-items:center;gap:.65rem}
 .logo{display:block;height:48px;width:auto}
 .logo-lt{display:none}
@@ -124,10 +124,10 @@ section{padding-block:var(--section);position:relative}
 .rotor.swap{opacity:0;transform:translateY(.25em) rotateX(60deg)}
 
 /* hero */
-.hero{padding-top:clamp(7.5rem,14vw,11rem);padding-bottom:clamp(3rem,6vw,6rem)}
+.hero{padding-top:clamp(7.5rem,14vw,11rem);padding-bottom:clamp(3rem,6vw,6rem);width:100% !important;max-width:100% !important;box-sizing:border-box !important}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(1.5rem,4vw,4rem);align-items:center}
 .hero-copy>*+*{margin-top:clamp(1rem,2.2vw,1.7rem)}
-.hero-copy .display{font-size:clamp(2.5rem,1rem + 6vw,6rem)}
+.hero-copy .display{font-size:clamp(2rem,1rem + 5vw,5.5rem);line-height:1.1;word-wrap:break-word}
 .cta-row{display:flex;flex-wrap:wrap;gap:.8rem}
 .mini-trust{display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;color:var(--muted);font-size:.93rem;font-weight:500}
 .mini-trust li::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:.5rem;vertical-align:middle}
@@ -309,29 +309,6 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
 .js [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
 .js [data-reveal].in{opacity:1;transform:none}
 
-@media (max-width:980px){
-  .hero-grid,.split,.calc,.contact-grid{grid-template-columns:1fr}
-  .scene-wrap{max-height:520px}
-  .bento{grid-template-columns:repeat(2,1fr)}.bento .card,.bento .w3,.bento .w4{grid-column:span 1}
-  .foot-grid{grid-template-columns:1fr 1fr}
-  .menu-btn{display:inline-grid}.icon-btn kbd,.nav-cta{display:none}
-  .nav-links{position:fixed;inset:0;z-index:-1;flex-direction:column;justify-content:center;align-items:center;gap:.4rem;background:color-mix(in srgb,var(--bg) 96%,transparent);backdrop-filter:blur(20px);opacity:0;pointer-events:none;transition:opacity .3s}
-  .nav-links a{font:700 var(--step-3) Sora,Inter,system-ui,sans-serif;padding:.5rem 1.4rem;color:var(--ink)}
-  .menu-open .nav-links{opacity:1;pointer-events:auto}
-  #paletteBtn{display:none}
-}
-@media (max-width:560px){
-  .bento{grid-template-columns:1fr}
-  form .row{grid-template-columns:1fr}
-  .foot-grid{grid-template-columns:1fr}
-  .timeline .card{grid-template-columns:1fr;gap:.4rem}
-  .scene-hud .hint{display:none}
-}
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
-  .js [data-reveal]{opacity:1;transform:none}
-}
-
 /* ---- Student accounts (register / login / account) ---- */
 .auth-wrap{max-width:520px;margin-inline:auto}
 .auth-wrap label.l,.acct-grid label.l{display:block;margin:1.1rem 0 .45rem;font-weight:600;font-size:.88rem}
@@ -351,187 +328,85 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
 .st-cancelled{background:color-mix(in srgb,var(--bad) 18%,transparent);border-color:var(--bad)}
 .link-btn{background:none;border:0;padding:0;margin-top:.5rem;color:var(--bad);font:600 .84rem Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
-/* Responsive Mobile Navigation Drawer & Font Size Calibration */
-@media screen and (max-width: 768px) {
-  /* 1. Reset the mobile menu drawer container */
-  .nav-menu,
-  nav ul,
-  .mobile-menu,
-  #navMenu {
-    position: fixed;
-    top: 60px;                           /* Sits cleanly below your logo bar */
-    left: 0;
-    width: 100%;
-    height: auto;
-    max-height: 85vh;
-    overflow-y: auto;
-    
-    /* Solid opaque dark backdrop to prevent overlapping underlying hero text */
-    background-color: #0d1117 !important;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    
-    /* Layout and Spacing */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 24px 16px 32px 16px;
-    gap: 12px;                          /* Keeps items neatly separated without huge gaps */
-    z-index: 99999 !important;          /* Stays strictly on top */
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.7);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
+/* ==========================================================
+   CLEAN RESPONSIVE MEDIA QUERIES & MOBILE NAVIGATION OVERLAY
+   ========================================================== */
 
-  /* 2. Fix the link font sizing: clamp between 15px and 17px */
-  .nav-menu a,
-  nav ul li a,
-  .mobile-menu a,
-  #navMenu a {
-    font-size: clamp(0.95rem, 4vw, 1.05rem) !important; /* ~15px to 17px, never massive */
-    font-weight: 500 !important;                        /* Medium weight prevents bulky text */
-    letter-spacing: 0.01em;
-    color: #e6edf3 !important;
-    text-decoration: none;
-    
-    display: block;
-    width: 90%;
-    max-width: 300px;
-    padding: 10px 16px;
-    text-align: center;
-    border-radius: 8px;
-    background: transparent;
-    transition: background-color 0.2s ease, color 0.2s ease;
-  }
+@media (max-width:980px){
+  .hero-grid,.split,.calc,.contact-grid{grid-template-columns:1fr}
+  .scene-wrap{max-height:520px}
+  .bento{grid-template-columns:repeat(2,1fr)}.bento .card,.bento .w3,.bento .w4{grid-column:span 1}
+  .foot-grid{grid-template-columns:1fr 1fr}
+  .menu-btn{display:inline-grid}.icon-btn kbd,.nav-cta{display:none}
+  #paletteBtn{display:none}
 
-  /* 3. Subtle tap highlight for mobile screens */
-  .nav-menu a:hover,
-  .nav-menu a:active,
-  nav ul li a:active {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    color: #38bdf8 !important;                          /* ANKA cyan accent */
-  }
-
-  /* 4. Special styling for Challenge / Login CTA if styled as a button */
-  .nav-menu a.btn,
-  .nav-menu a[href*="login"],
-  .nav-menu a[href*="challenge"] {
-    font-weight: 600 !important;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-  }
-}
-}
-/* ========================================================
-   FIX: UNTRAP HEADER & MOBILE NAVIGATION DRAWER
-   ======================================================== */
-
-/* 1. Ensure the header container never clips its dropdown */
-header, 
-.site-header, 
-.navbar, 
-nav {
-  overflow: visible !important; /* CRITICAL: Prevents menu scrolling inside header */
-}
-
-/* 2. Responsive mobile navigation drawer */
-@media screen and (max-width: 900px) {
-  
-  /* Target the nav container when open/active */
-  .nav-links,
-  .nav-menu,
-  nav ul,
-  .mobile-menu {
+  /* Untrapped Mobile Drawer Container */
+  .nav-links{
     position: fixed !important;
-    top: 60px !important;                 /* Starts right below the top navigation bar */
+    top: 72px !important;
     left: 0 !important;
     right: 0 !important;
+    bottom: 0 !important;
     width: 100vw !important;
-    height: auto !important;
-    min-height: calc(100vh - 60px) !important;
-    
-    /* Solid opaque background to block out any text beneath */
+    height: calc(100vh - 72px) !important;
     background: #090d16 !important;
     background-color: #090d16 !important;
-    
-    /* Layout & Positioning */
-    display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
     justify-content: flex-start !important;
-    padding: 30px 20px !important;
-    gap: 16px !important;
-    
-    /* Lift strictly above hero titles and body content */
+    align-items: center !important;
+    padding: 32px 20px !important;
+    gap: 14px !important;
     z-index: 999999 !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    overflow-y: auto !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+    border-top: 1px solid var(--line);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.85);
   }
 
-  /* 3. Strict typography reset for the 4 menu links */
-  .nav-links a,
-  .nav-menu a,
-  nav ul li a,
-  .mobile-menu a {
-    font-size: 16px !important;           /* Fixed, clean, readable size */
-    line-height: 1.4 !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.02em !important;
-    text-transform: none !important;
-    color: #f1f5f9 !important;            /* Clean crisp white */
+  /* Corrected font size & touch target cards for menu links */
+  .nav-links a{
+    font: 600 16px Inter,system-ui,sans-serif !important;
+    color: #f1f5f9 !important;
     text-decoration: none !important;
-    
-    /* Touch Target Button Style */
-    display: block !important;
+    letter-spacing: .01em !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     width: 100% !important;
-    max-width: 280px !important;
-    padding: 12px 16px !important;
-    text-align: center !important;
-    background: rgba(255, 255, 255, 0.04) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 8px !important;
-    transition: all 0.2s ease !important;
+    max-width: 290px !important;
+    padding: 13px 20px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-sizing: border-box !important;
+    transition: background-color .2s ease, border-color .2s ease !important;
   }
 
-  /* Tap & Hover states */
   .nav-links a:hover,
-  .nav-links a:active,
-  .nav-menu a:hover,
-  .nav-menu a:active {
-    background: rgba(56, 189, 248, 0.12) !important;
-    color: #38bdf8 !important;            /* ANKA cyan accent */
+  .nav-links a:active{
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
     border-color: #38bdf8 !important;
   }
-}
-/* Ensure box-sizing applies to every element */
-*, *::before, *::after {
-  box-sizing: border-box;
+
+  .menu-open .nav-links{
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
 }
 
-/* Prevent horizontal overflow and enable fluid scaling */
-html, body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden; /* Stops horizontal side-scrolling */
-  margin: 0;
-  padding: 0;
+@media (max-width:560px){
+  .bento{grid-template-columns:1fr}
+  form .row{grid-template-columns:1fr}
+  .foot-grid{grid-template-columns:1fr}
+  .timeline .card{grid-template-columns:1fr;gap:.4rem}
+  .scene-hud .hint{display:none}
+  .hero-copy .display{font-size: clamp(2rem, 8.5vw, 3rem) !important;}
 }
 
-/* Make images, canvas, videos, and svg fluid */
-img, video, canvas, svg {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Ensure main containers shrink cleanly on mobile */
-.container, 
-.wrapper, 
-main, 
-section, 
-.hero {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  padding-left: clamp(16px, 4vw, 24px);
-  padding-right: clamp(16px, 4vw, 24px);
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .js [data-reveal]{opacity:1;transform:none}
 }
