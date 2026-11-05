@@ -25,8 +25,8 @@
   color-scheme:light;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:var(--step-0);line-height:1.65;color:var(--ink);background:var(--bg);overflow-x:hidden;-webkit-font-smoothing:antialiased;animation:pageIn .6s both}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:hidden;max-width:100%}
+body{max-width:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:var(--step-0);line-height:1.65;color:var(--ink);background:var(--bg);overflow-x:hidden;-webkit-font-smoothing:antialiased;animation:pageIn .6s both}
 body.leaving{opacity:0;transition:opacity .22s}
 @keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 img,svg,canvas{display:block;max-width:100%}
@@ -347,8 +347,8 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    width: 100vw !important;
-    height: calc(100vh - 72px) !important;
+    width: auto !important;
+    height: auto !important;
     background: #090d16 !important;
     background-color: #090d16 !important;
     flex-direction: column !important;
@@ -359,8 +359,9 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
     z-index: 999999 !important;
     overflow-y: auto !important;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity .25s ease;
+    transition: opacity .25s ease, visibility .25s;
     border-top: 1px solid var(--line);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.85);
   }
@@ -393,8 +394,13 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
 
   .menu-open .nav-links{
     opacity: 1 !important;
+    visibility: visible !important;
     pointer-events: auto !important;
   }
+
+  /* backdrop-filter on the nav traps fixed children inside it; drop it here so the drawer is viewport-relative */
+  .nav,.menu-open .nav{backdrop-filter:none !important;-webkit-backdrop-filter:none !important;background:var(--bg-2) !important}
+  .hero-grid,.split,.calc,.contact-grid{grid-template-columns:minmax(0,1fr)}
 }
 
 @media (max-width:560px){
@@ -409,107 +415,28 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
   .js [data-reveal]{opacity:1;transform:none}
+}
 
-  /* ==========================================================
-   MOBILE FIT & EDGE-TO-EDGE GUTTER FIX
+/* ==========================================================
+   MOBILE FIT — everything sizes to the screen, no side gap
    ========================================================== */
-@media screen and (max-width: 768px) {
-  /* 1. Global boundary lock */
-  html, body {
-    width: 100% !important;
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-  }
-
-  /* 2. Unify all container widths so left and right margins match perfectly */
-  :root {
-    --gutter: 18px !important;
-  }
-
-  .container,
-  .narrow {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding-left: 18px !important;
-    padding-right: 18px !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    box-sizing: border-box !important;
-  }
-
-  /* 3. Header alignment */
-  .site-header {
-    width: 100% !important;
-    padding-left: 14px !important;
-    padding-right: 14px !important;
-    box-sizing: border-box !important;
-  }
-
-  .site-header .nav {
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0.5rem 0.8rem !important;
-    box-sizing: border-box !important;
-  }
-
-  /* 4. Hero section and copy alignment */
-  .hero {
-    width: 100% !important;
-    padding-top: 5.5rem !important;
-    padding-bottom: 2rem !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    box-sizing: border-box !important;
-  }
-
-  .hero-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 1.5rem !important;
-  }
-
-  .hero-copy {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  .hero-copy .display {
-    font-size: clamp(2.1rem, 8vw, 3.2rem) !important;
-    line-height: 1.12 !important;
-    letter-spacing: -0.03em !important;
-  }
-
-  .hero-copy .lead {
-    font-size: 1rem !important;
-    line-height: 1.55 !important;
-    max-width: 100% !important;
-  }
-
-  /* 5. Center & balance CTA buttons across full mobile width */
-  .cta-row {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 10px !important;
-  }
-
-  .cta-row .btn {
-    width: 100% !important;
-    max-width: 100% !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-  }
-
-  /* 6. Fix 3D Canvas Column fit on mobile */
-  .scene-col {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  .scene-wrap {
-    width: 100% !important;
-    max-height: 380px !important;
-    margin: 0 auto !important;
-  }
+@media (max-width:768px){
+  :root{--gutter:18px}
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  /* grid/flex children may shrink instead of stretching the page */
+  .container>*,.narrow>*,.hero-grid>*,.split>*,.calc>*,.contact-grid>*,.acct-grid>*,.grid-3>*,.bento>*{min-width:0}
+  .grid-3{grid-template-columns:minmax(0,1fr)}
+  .hero{padding-top:5.5rem;padding-bottom:2rem}
+  .hero-grid{gap:1.5rem}
+  .hero-copy .display{font-size:clamp(2rem,8vw,3rem);line-height:1.12;letter-spacing:-.03em;overflow-wrap:anywhere}
+  .h1,.h2,.lead,.card h3,.card p{overflow-wrap:anywhere}
+  .lead{max-width:100%}
+  .cta-row{flex-direction:column;align-items:stretch}
+  .cta-row .btn,.form-actions .btn{width:100%;white-space:normal;text-align:center}
+  .scene-wrap{max-height:380px}
+  .site-header{padding-inline:14px}
+  .site-header .nav{width:100%;max-width:100%;margin:0;padding:.5rem .8rem}
+  .game-stage,.g-row{max-width:100%}
+  .table-wrap{max-width:100%}
+  .foot-bottom{flex-direction:column}
 }
