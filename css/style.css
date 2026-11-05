@@ -409,4 +409,66 @@ form label.l{display:block;font-weight:600;font-size:.88rem;margin:1.1rem 0 .5re
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
   .js [data-reveal]{opacity:1;transform:none}
+
+  /* ========================================================
+   MOBILE FLUID EDGE-TO-EDGE GUTTER FIX
+   ======================================================== */
+
+@media screen and (max-width: 768px) {
+  /* 1. Unify the side spacing for containers and sections */
+  :root {
+    --gutter: 16px !important; /* Locks left/right mobile margin to an exact clean 16px */
+  }
+
+  .container,
+  .narrow,
+  .hero,
+  section {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 2. Align the header pill to match the content margins */
+  .site-header {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .site-header .container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+  }
+
+  /* 3. Hero content alignment */
+  .hero {
+    padding-top: 5.5rem !important; /* Clean distance under the fixed header */
+    text-align: left; /* Keeps titles, badges, and trust lists evenly left-anchored */
+  }
+
+  .hero-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* 4. Full-width mobile CTA buttons */
+  .cta-row {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .cta-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 }
