@@ -253,3 +253,64 @@
     else if (page === 'account') initAccount();
   });
 })();
+async function loadRecordedClasses() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const statusMsg = document.getElementById('recordingStatusMessage');
+  const videoGrid = document.getElementById('videoGrid');
+
+  // 1. Fetch recordings (RLS will automatically block this if not approved)
+  const { data: recordings, error } = await supabaseClient
+    .from('class_recordings')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error || !recordings || recordings.length === 0) {
+    // If blocked or empty
+    const { data: access } = await supabaseClient
+      .from('student_access')
+      .select('is_allowed')
+      .eq('user_id', user.id)
+      .single();
+
+    if (access && !access.is_allowed) {
+      statusMsg.innerHTML = `
+        <div class="alert" style="border: 1px solid var(--c3); background: rgba(251, 191, 36, 0.1);">
+          🔒 <strong>Access Pending Approval:</strong> Your account is registered, but recorded classes require admin authorization. Please contact your teacher or wait for approval.
+        </div>`;
+    } else {
+      statusMsg.innerText = "No class recordings have been uploaded yet.";
+    }
+    return;
+  }
+
+  // 2. If approved, render the video player embeds
+  statusMsg.style.display = 'none';
+  videoGrid.style.display = 'grid';
+  videoGrid.innerHTML = '';
+
+  recordings.forEach(rec => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="pill" style="margin-bottom: 0.5rem;">${rec.class_grade} · ${rec.subject}</div>
+      <h3 class="h3">${rec.title}</h3>
+      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; margin-top: 1rem; border: 1px solid var(--line);">
+        <iframe 
+          src="https://drive.google.com/file/d/${rec.drive_file_id}/preview" 
+          style="position: absolute; top:0; left: 0; width: 100%; height: 100%; border: 0;" 
+          allow="autoplay" 
+          allowfullscreen>
+        </iframe>
+      </div>
+    `;
+    videoGrid.appendChild(card);
+  });
+}
+
+// Call upon successful login
+loadRecordedClasses();
