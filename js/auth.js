@@ -258,7 +258,7 @@
   }
 
   function openPlayer(v, box) {
-    var wmTimer = null;
+    var wmTimer = null, cornerBtn = null;
     var modal = document.createElement('div'); modal.className = 'yt-modal';
     modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-label', v.title);
     var wrap = document.createElement('div'); wrap.className = 'yt-box';
@@ -275,7 +275,7 @@
     }
     function onKey(e) { if (e.key === 'Escape') { if (frame.classList.contains('vid-full')) exitFull(); else close(); } }
     function exitFull() {
-      frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen';
+      frame.classList.remove('vid-full'); setFsUi(false);
       if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
     }
 
@@ -286,9 +286,12 @@
       fr.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media'; fr.allowFullscreen = true;
       fr.referrerPolicy = 'strict-origin-when-cross-origin';
       frame.appendChild(fr);
-      var shield = document.createElement('div'); shield.setAttribute('aria-hidden', 'true');
-      shield.style.cssText = 'position:absolute;top:0;right:0;width:64px;height:56px;z-index:3;background:#000';
-      frame.appendChild(shield);
+      // Corner button: hides Google's pop-out icon and doubles as Full screen
+      cornerBtn = document.createElement('button'); cornerBtn.type = 'button';
+      cornerBtn.setAttribute('aria-label', 'Full screen'); cornerBtn.textContent = '⛶';
+      cornerBtn.style.cssText = 'position:absolute;top:0;right:0;z-index:6;width:56px;height:52px;border:0;border-bottom-left-radius:14px;background:rgba(18,18,26,.78);color:#fff;font-size:1.35rem;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent';
+      cornerBtn.addEventListener('click', function () { toggleFull(); });
+      frame.appendChild(cornerBtn);
     } else {
       sb.storage.from('videos').createSignedUrl(v.file_path, 3600).then(function (sg) {
         if (sg.error || !sg.data) { say(box, 'bad', 'Could not open this video. Please log in again.'); close(); return; }
@@ -344,13 +347,18 @@
 
     var actions = document.createElement('div'); actions.className = 'yt-actions';
     var fs = document.createElement('button'); fs.type = 'button'; fs.className = 'btn btn-ghost btn-sm'; fs.textContent = '⛶ Full screen';
-    fs.addEventListener('click', function () {
+    function setFsUi(on) {
+      fs.textContent = on ? '✕ Exit full screen' : '⛶ Full screen';
+      if (cornerBtn) cornerBtn.textContent = on ? '✕' : '⛶';
+    }
+    function toggleFull() {
       if (frame.classList.contains('vid-full') || document.fullscreenElement === frame) { exitFull(); return; }
       var req = frame.requestFullscreen || frame.webkitRequestFullscreen;
-      if (req) { try { var r = req.call(frame); if (r && r.catch) r.catch(function () { frame.classList.add('vid-full'); }); fs.textContent = '✕ Exit full screen'; return; } catch (e) { } }
-      frame.classList.add('vid-full'); fs.textContent = '✕ Exit full screen';
-    });
-    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) { frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen'; } });
+      if (req) { try { var r = req.call(frame); if (r && r.catch) r.catch(function () { frame.classList.add('vid-full'); }); setFsUi(true); return; } catch (e) { } }
+      frame.classList.add('vid-full'); setFsUi(true);
+    }
+    fs.addEventListener('click', toggleFull);
+    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) { frame.classList.remove('vid-full'); setFsUi(false); } });
     var cl = document.createElement('button'); cl.type = 'button'; cl.className = 'btn btn-ghost btn-sm'; cl.textContent = '✕ Close';
     cl.addEventListener('click', close);
     actions.appendChild(fs); actions.appendChild(cl); under.appendChild(actions);
