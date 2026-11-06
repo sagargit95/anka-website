@@ -41,47 +41,68 @@
     if (label) btn.textContent = on ? 'Please wait…' : label;
   }
 
-  // Get active session from Supabase
+  // Create the Supabase client here if config.js could not (e.g. library loaded late)
+  if (!sb && window.supabase && window.supabase.createClient && typeof SUPABASE_URL !== 'undefined') {
+    try { sb = window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch (e) { }
+  }
+
+  var NO_SERVER = 'Cannot reach the server. Check your internet connection and reload the page. If it keeps happening, message us on WhatsApp.';
+
+  // Turn Supabase's technical errors into plain language
+  function friendly(err, fallback) {
+    var m = ((err && err.message) || '').toLowerCase();
+    if (m.indexOf('invalid login') > -1) return 'Wrong email or password. Please try again.';
+    if (m.indexOf('not confirmed') > -1) return 'Please confirm your email first. Open the confirmation email we sent you, then log in.';
+    if (m.indexOf('already registered') > -1 || m.indexOf('already been registered') > -1) return 'This email is already registered. Please log in instead.';
+    if (m.indexOf('rate limit') > -1 || m.indexOf('too many') > -1) return 'Too many attempts. Please wait a few minutes and try again.';
+    if (m.indexOf('password') > -1 && m.indexOf('least') > -1) return 'Password is too short. Use at least 8 characters.';
+    if (m.indexOf('failed to fetch') > -1 || m.indexOf('network') > -1) return NO_SERVER;
+    return (err && err.message) || fallback;
+  }
+
+  // Get active session (read locally, no network call needed)
   async function boot() {
-    if (!sb) {
-      console.error('Supabase client not initialized. Check js/config.js');
-      return;
-    }
-    var res = await sb.auth.getUser();
-    if (res.data && res.data.user) {
-      var meta = res.data.user.user_metadata || {};
-      user = {
-        id: res.data.user.id,
-        email: res.data.user.email,
-        name: meta.full_name || meta.name || 'Student',
-        phone: meta.phone || '',
-        level: meta.level || '9-10'
-      };
-      flag(true);
-    } else {
+    if (!sb) { console.error('Supabase client not initialized. Check js/config.js'); return; }
+    try {
+      var res = await sb.auth.getSession();
+      var u = res && res.data && res.data.session && res.data.session.user;
+      if (u) {
+        var meta = u.user_metadata || {};
+        user = {
+          id: u.id,
+          email: u.email,
+          name: meta.full_name || meta.name || 'Student',
+          phone: meta.phone || '',
+          level: meta.level || '9-10'
+        };
+        flag(true);
+      } else {
+        user = null;
+        flag(false);
+      }
+    } catch (e) {
+      console.warn('Session check failed:', e);
       user = null;
-      flag(false);
     }
   }
 
   function initRegister() {
     if (user) { location.replace('account.html'); return; }
-    var f = $('#regForm'), box = $('#formMsg'), btn = $('button[type=submit]', f);
+    var f = $('#regForm'), box = $('#formMsg'), btn = f && $('button[type=submit]', f);
     if (!f) return;
 
     f.addEventListener('submit', async function (e) {
       e.preventDefault(); say(box, '', ''); fieldErrors(f, null);
       var d = {
-        name: f.name.value,
-        phone: f.phone.value,
-        email: f.email.value,
-        password: f.password.value,
-        level: f.level.value,
-        website: f.website ? f.website.value : '' // Honeypot anti-spam
+        name: f.elements['name'].value,
+        phone: f.elements['phone'].value,
+        email: f.elements['email'].value.trim(),
+        password: f.elements['password'].value,
+        level: f.elements['level'].value,
+        website: f.elements['website'] ? f.elements['website'].value : '' // Honeypot anti-spam
       };
 
-      // Honeypot check
-      if (d.website) return;
+      if (d.website) return; // bot
 
       var local = {};
       if (d.name.trim().length < 2) local.name = 'Please enter your name.';
@@ -90,27 +111,39 @@
       if (d.password.length < 8) local.password = 'Use at least 8 characters.';
       if (Object.keys(local).length) { fieldErrors(f, local); return; }
 
+      if (!sb) { say(box, 'bad', NO_SERVER); return; }
+
       busy(btn, true, 'Create account');
-
-      var res = await sb.auth.signUp({
-        email: d.email,
-        password: d.password,
-        options: {
-          data: {
-            full_name: d.name.trim(),
-            phone: d.phone.trim(),
-            level: d.level
+      var res;
+      try {
+        res = await sb.auth.signUp({
+          email: d.email,
+          password: d.password,
+          options: {
+            emailRedirectTo: new URL('login.html', location.href).href,
+            data: { full_name: d.name.trim(), phone: d.phone.trim(), level: d.level }
           }
-        }
-      });
-
+        });
+      } catch (err) {
+        res = { error: err };
+      }
       busy(btn, false, 'Create account');
 
-      if (res.error) {
-        say(box, 'bad', res.error.message || 'Could not create the account.');
+      if (res.error) { say(box, 'bad', friendly(res.error, 'Could not create the account.')); return; }
+
+      var u = res.data && res.data.user;
+      // Email already registered (Supabase hides this when confirmation is on)
+      if (u && u.identities && u.identities.length === 0) {
+        say(box, 'bad', 'This email is already registered. Please log in instead.');
         return;
       }
-
+      // Email confirmation is ON: no session yet, student must confirm first
+      if (!res.data || !res.data.session) {
+        flag(false);
+        f.reset();
+        say(box, 'ok', 'Account created! We sent a confirmation link to ' + d.email + '. Open it, then come back and log in.');
+        return;
+      }
       flag(true);
       location.href = 'account.html';
     });
@@ -118,29 +151,25 @@
 
   function initLogin() {
     if (user) { location.replace('account.html'); return; }
-    var f = $('#loginForm'), box = $('#formMsg'), btn = $('button[type=submit]', f);
+    var f = $('#loginForm'), box = $('#formMsg'), btn = f && $('button[type=submit]', f);
     if (!f) return;
 
     f.addEventListener('submit', async function (e) {
       e.preventDefault(); say(box, '', ''); fieldErrors(f, null);
-      if (!f.email.value.trim() || !f.password.value) {
-        say(box, 'bad', 'Enter your email and password.');
-        return;
-      }
+      var email = f.elements['email'].value.trim(), pass = f.elements['password'].value;
+      if (!email || !pass) { say(box, 'bad', 'Enter your email and password.'); return; }
+      if (!sb) { say(box, 'bad', NO_SERVER); return; }
 
       busy(btn, true, 'Log in');
-
-      var res = await sb.auth.signInWithPassword({
-        email: f.email.value.trim(),
-        password: f.password.value
-      });
-
+      var res;
+      try {
+        res = await sb.auth.signInWithPassword({ email: email, password: pass });
+      } catch (err) {
+        res = { error: err };
+      }
       busy(btn, false, 'Log in');
 
-      if (res.error) {
-        say(box, 'bad', res.error.message || 'Invalid email or password.');
-        return;
-      }
+      if (res.error) { say(box, 'bad', friendly(res.error, 'Invalid email or password.')); return; }
 
       flag(true);
       location.href = 'account.html';
@@ -247,71 +276,9 @@
     loadBookings();
   }
 
-  boot().then(function () {
+  boot().catch(function () { }).then(function () {
     if (page === 'register') initRegister();
     else if (page === 'login') initLogin();
     else if (page === 'account') initAccount();
   });
 })();
-async function loadRecordedClasses() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) {
-    window.location.href = 'login.html';
-    return;
-  }
-
-  const statusMsg = document.getElementById('recordingStatusMessage');
-  const videoGrid = document.getElementById('videoGrid');
-
-  // 1. Fetch recordings (RLS will automatically block this if not approved)
-  const { data: recordings, error } = await supabaseClient
-    .from('class_recordings')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error || !recordings || recordings.length === 0) {
-    // If blocked or empty
-    const { data: access } = await supabaseClient
-      .from('student_access')
-      .select('is_allowed')
-      .eq('user_id', user.id)
-      .single();
-
-    if (access && !access.is_allowed) {
-      statusMsg.innerHTML = `
-        <div class="alert" style="border: 1px solid var(--c3); background: rgba(251, 191, 36, 0.1);">
-          🔒 <strong>Access Pending Approval:</strong> Your account is registered, but recorded classes require admin authorization. Please contact your teacher or wait for approval.
-        </div>`;
-    } else {
-      statusMsg.innerText = "No class recordings have been uploaded yet.";
-    }
-    return;
-  }
-
-  // 2. If approved, render the video player embeds
-  statusMsg.style.display = 'none';
-  videoGrid.style.display = 'grid';
-  videoGrid.innerHTML = '';
-
-  recordings.forEach(rec => {
-  const card = document.createElement('article');
-  card.className = 'card';
-  card.innerHTML = `
-    <div class="pill" style="margin-bottom: 0.5rem;">${rec.class_grade} · ${rec.subject}</div>
-    <h3 class="h3">${rec.title}</h3>
-    
-    <div class="video-secure-wrap" oncontextmenu="return false;">
-      <!-- Transparent click barrier covering the top-right Drive popout button -->
-      <div class="video-shield-top" title="Playback only"></div>
-      
-      <!-- Sandboxed Drive preview player -->
-      <iframe 
-        src="https://drive.google.com/file/d/${rec.drive_file_id}/preview" 
-        sandbox="allow-scripts allow-same-origin"
-        allow="autoplay; encrypted-media" 
-        allowfullscreen>
-      </iframe>
-    </div>
-  `;
-  videoGrid.appendChild(card);
-});
