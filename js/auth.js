@@ -224,6 +224,9 @@
       '.yt-player{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;width:min(100%,calc((100dvh - 150px)*16/9));margin-inline:auto}',
       '.yt-player iframe,.yt-player video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}',
       '.yt-player.vid-full{position:fixed;inset:0;z-index:7000;aspect-ratio:auto;width:100vw;height:100dvh;border-radius:0;margin:0}',
+      '.yt-fs{position:absolute;right:10px;bottom:10px;z-index:5;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:rgba(0,0,0,.6);color:#fff;border:1px solid rgba(255,255,255,.28);cursor:pointer;padding:0;transition:background .2s,transform .2s}',
+      '.yt-fs:hover{background:rgba(0,0,0,.85);transform:scale(1.08)}',
+      '.yt-fs:focus-visible{outline:2px solid var(--c2);outline-offset:2px}',
       '.yt-under{color:#fff;padding:.9rem .2rem 0}',
       '.yt-under h3{font-size:1.15rem;line-height:1.35;margin:0 0 .3rem;color:#fff}',
       '.yt-under p{margin:.3rem 0 0;color:#cfcfd6;font-size:.92rem;overflow-wrap:anywhere}',
@@ -266,13 +269,22 @@
       clearInterval(wmTimer);
       if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
       document.removeEventListener('keydown', onKey);
+      document.removeEventListener('fullscreenchange', onFsChange);
       document.documentElement.style.overflow = '';
       modal.remove();
     }
     function onKey(e) { if (e.key === 'Escape') { if (frame.classList.contains('vid-full')) exitFull(); else close(); } }
     function exitFull() {
-      frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen';
+      frame.classList.remove('vid-full'); setFs(false);
       if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
+    }
+    function onFsChange() { if (!document.fullscreenElement) { frame.classList.remove('vid-full'); setFs(false); } }
+    var ICON_ENTER = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>';
+    var ICON_EXIT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/></svg>';
+    function setFs(on) {
+      fs.innerHTML = on ? ICON_EXIT : ICON_ENTER;
+      var t = on ? 'Exit full screen' : 'Full screen';
+      fs.setAttribute('aria-label', t); fs.title = t;
     }
 
     // player
@@ -309,25 +321,26 @@
     if (meta) { var mt = document.createElement('div'); mt.style.cssText = 'color:#a9a9b3;font-size:.85rem'; mt.textContent = meta; under.appendChild(mt); }
     if (v.description) { var dp = document.createElement('p'); dp.textContent = v.description; under.appendChild(dp); }
 
-    var actions = document.createElement('div'); actions.className = 'yt-actions';
-    var fs = document.createElement('button'); fs.type = 'button'; fs.className = 'btn btn-ghost btn-sm'; fs.textContent = '⛶ Full screen';
+    // full screen button, bottom-right corner of the player (no close button: tap outside the player or press Esc)
+    var fs = document.createElement('button'); fs.type = 'button'; fs.className = 'yt-fs';
+    setFs(false);
     fs.addEventListener('click', function () {
       if (frame.classList.contains('vid-full') || document.fullscreenElement === frame) { exitFull(); return; }
       var req = frame.requestFullscreen || frame.webkitRequestFullscreen;
-      if (req) { try { var r = req.call(frame); if (r && r.catch) r.catch(function () { frame.classList.add('vid-full'); }); fs.textContent = '✕ Exit full screen'; return; } catch (e) { } }
-      frame.classList.add('vid-full'); fs.textContent = '✕ Exit full screen';
+      if (req) { try { var r = req.call(frame); if (r && r.catch) r.catch(function () { frame.classList.add('vid-full'); setFs(true); }); setFs(true); return; } catch (e) { } }
+      frame.classList.add('vid-full'); setFs(true);
     });
-    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) { frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen'; } });
-    var cl = document.createElement('button'); cl.type = 'button'; cl.className = 'btn btn-ghost btn-sm'; cl.textContent = '✕ Close';
-    cl.addEventListener('click', close);
-    actions.appendChild(fs); actions.appendChild(cl); under.appendChild(actions);
+    document.addEventListener('fullscreenchange', onFsChange);
+    frame.appendChild(fs);
 
     wrap.appendChild(frame); wrap.appendChild(under); modal.appendChild(wrap);
     modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
     document.addEventListener('keydown', onKey);
     document.documentElement.style.overflow = 'hidden';
-    document.body.appendChild(modal);
-    cl.focus();
+    // Attach to <html>, not <body>, so no transform/animation on body can offset this fixed overlay
+    document.documentElement.appendChild(modal);
+    modal.scrollTop = 0;
+    fs.focus({ preventScroll: true });
   }
 
   async function loadVideos() {
