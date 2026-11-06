@@ -202,11 +202,140 @@
     return loadVideos();
   }
 
+  // ---------- YouTube-style video list ----------
+  function injectVideoCss() {
+    if (document.getElementById('ytcss')) return;
+    var st = document.createElement('style'); st.id = 'ytcss';
+    st.textContent = [
+      '.yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:1.6rem 1rem}',
+      '.yt-card{display:block;width:100%;text-align:left;background:none;border:0;padding:0;color:inherit;cursor:pointer;font:inherit}',
+      '.yt-thumb{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--c1) 45%,#000),color-mix(in srgb,var(--c2) 30%,#000));display:grid;place-items:center}',
+      '.yt-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .35s ease}',
+      '.yt-card:hover .yt-thumb img,.yt-card:focus-visible .yt-thumb img{transform:scale(1.05)}',
+      '.yt-play{position:relative;z-index:1;width:54px;height:54px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center;font-size:1.3rem;padding-left:4px;transition:transform .2s,background .2s}',
+      '.yt-card:hover .yt-play{transform:scale(1.12);background:rgba(0,0,0,.8)}',
+      '.yt-chip{position:absolute;z-index:1;right:8px;bottom:8px;background:rgba(0,0,0,.78);color:#fff;font-size:.72rem;font-weight:600;padding:2px 7px;border-radius:6px}',
+      '.yt-info{padding:.7rem .15rem 0}',
+      '.yt-title{font-weight:600;font-size:1rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}',
+      '.yt-meta{color:var(--muted);font-size:.85rem;margin-top:.25rem}',
+      '@media (max-width:600px){.yt-grid{grid-template-columns:minmax(0,1fr);gap:1.4rem}.yt-thumb{border-radius:12px}}',
+      '.yt-modal{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.88);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:max(12px,env(safe-area-inset-top)) 12px 24px}',
+      '.yt-box{width:min(100%,1000px)}',
+      '.yt-player{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;width:min(100%,calc((100dvh - 150px)*16/9));margin-inline:auto}',
+      '.yt-player iframe,.yt-player video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}',
+      '.yt-player.vid-full{position:fixed;inset:0;z-index:7000;aspect-ratio:auto;width:100vw;height:100dvh;border-radius:0;margin:0}',
+      '.yt-under{color:#fff;padding:.9rem .2rem 0}',
+      '.yt-under h3{font-size:1.15rem;line-height:1.35;margin:0 0 .3rem;color:#fff}',
+      '.yt-under p{margin:.3rem 0 0;color:#cfcfd6;font-size:.92rem;overflow-wrap:anywhere}',
+      '.yt-actions{display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap}',
+      '@media (max-height:480px) and (orientation:landscape){.yt-player{width:min(100%,calc((100dvh - 24px)*16/9))}.yt-under{display:none}}'
+    ].join('\n');
+    document.head.appendChild(st);
+  }
+
+  function driveId(url) {
+    var m = (url || '').match(/drive\.google\.com\/file\/d\/([\w-]+)/) || (url || '').match(/drive\.google\.com\/(?:open|uc)\?[^#]*id=([\w-]+)/);
+    return m ? m[1] : '';
+  }
+  function thumbFor(v) {
+    var id = driveId(v.embed_url);
+    if (id) return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w640';
+    var m = (v.embed_url || '').match(/(?:youtube\.com\/watch\?[^#]*v=|youtu\.be\/)([\w-]{11})/);
+    return m ? 'https://i.ytimg.com/vi/' + m[1] + '/hqdefault.jpg' : '';
+  }
+  function ago(d) {
+    var t = Date.parse(d); if (!t) return '';
+    var m = Math.floor((Date.now() - t) / 60000);
+    if (m < 60) return 'Just now';
+    var h = Math.floor(m / 60); if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago');
+    var dd = Math.floor(h / 24); if (dd < 30) return dd + (dd === 1 ? ' day ago' : ' days ago');
+    var mo = Math.floor(dd / 30); if (mo < 12) return mo + (mo === 1 ? ' month ago' : ' months ago');
+    var y = Math.floor(mo / 12); return y + (y === 1 ? ' year ago' : ' years ago');
+  }
+
+  function openPlayer(v, box) {
+    var wmTimer = null;
+    var modal = document.createElement('div'); modal.className = 'yt-modal';
+    modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-label', v.title);
+    var wrap = document.createElement('div'); wrap.className = 'yt-box';
+    var frame = document.createElement('div'); frame.className = 'yt-player';
+    frame.style.userSelect = 'none';
+    frame.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    function close() {
+      clearInterval(wmTimer);
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
+      document.removeEventListener('keydown', onKey);
+      document.documentElement.style.overflow = '';
+      modal.remove();
+    }
+    function onKey(e) { if (e.key === 'Escape') { if (frame.classList.contains('vid-full')) exitFull(); else close(); } }
+    function exitFull() {
+      frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen';
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
+    }
+
+    // player
+    if (v.embed_url) {
+      var fr = document.createElement('iframe');
+      fr.src = toEmbed(v.embed_url); fr.title = v.title;
+      fr.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media'; fr.allowFullscreen = true;
+      fr.referrerPolicy = 'no-referrer';
+      fr.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+      frame.appendChild(fr);
+      var shield = document.createElement('div'); shield.setAttribute('aria-hidden', 'true');
+      shield.style.cssText = 'position:absolute;top:0;right:0;width:76px;height:64px;z-index:3;background:transparent';
+      frame.appendChild(shield);
+    } else {
+      sb.storage.from('videos').createSignedUrl(v.file_path, 3600).then(function (sg) {
+        if (sg.error || !sg.data) { say(box, 'bad', 'Could not open this video. Please log in again.'); close(); return; }
+        var vd = document.createElement('video');
+        vd.src = sg.data.signedUrl; vd.controls = true; vd.autoplay = true; vd.playsInline = true;
+        vd.setAttribute('controlsList', 'nodownload'); vd.setAttribute('disablePictureInPicture', '');
+        frame.insertBefore(vd, frame.firstChild);
+      });
+    }
+    // moving watermark with the student's name
+    var wm = document.createElement('div'); wm.setAttribute('aria-hidden', 'true');
+    wm.textContent = (user.name || 'Student') + ' · ' + (user.email || '');
+    wm.style.cssText = 'position:absolute;z-index:4;pointer-events:none;color:#fff;opacity:.28;font:600 12px Inter,system-ui,sans-serif;text-shadow:0 0 3px #000;white-space:nowrap;transition:top 1.2s,left 1.2s;top:12%;left:8%';
+    frame.appendChild(wm);
+    wmTimer = setInterval(function () { wm.style.top = (10 + Math.random() * 70) + '%'; wm.style.left = (4 + Math.random() * 45) + '%'; }, 6000);
+
+    // text under the player
+    var under = document.createElement('div'); under.className = 'yt-under';
+    var h = document.createElement('h3'); h.textContent = v.title; under.appendChild(h);
+    var meta = [v.subject, ago(v.created_at)].filter(Boolean).join(' · ');
+    if (meta) { var mt = document.createElement('div'); mt.style.cssText = 'color:#a9a9b3;font-size:.85rem'; mt.textContent = meta; under.appendChild(mt); }
+    if (v.description) { var dp = document.createElement('p'); dp.textContent = v.description; under.appendChild(dp); }
+
+    var actions = document.createElement('div'); actions.className = 'yt-actions';
+    var fs = document.createElement('button'); fs.type = 'button'; fs.className = 'btn btn-ghost btn-sm'; fs.textContent = '⛶ Full screen';
+    fs.addEventListener('click', function () {
+      if (frame.classList.contains('vid-full') || document.fullscreenElement === frame) { exitFull(); return; }
+      var req = frame.requestFullscreen || frame.webkitRequestFullscreen;
+      if (req) { try { var r = req.call(frame); if (r && r.catch) r.catch(function () { frame.classList.add('vid-full'); }); fs.textContent = '✕ Exit full screen'; return; } catch (e) { } }
+      frame.classList.add('vid-full'); fs.textContent = '✕ Exit full screen';
+    });
+    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) { frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen'; } });
+    var cl = document.createElement('button'); cl.type = 'button'; cl.className = 'btn btn-ghost btn-sm'; cl.textContent = '✕ Close';
+    cl.addEventListener('click', close);
+    actions.appendChild(fs); actions.appendChild(cl); under.appendChild(actions);
+
+    wrap.appendChild(frame); wrap.appendChild(under); modal.appendChild(wrap);
+    modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+    document.addEventListener('keydown', onKey);
+    document.documentElement.style.overflow = 'hidden';
+    document.body.appendChild(modal);
+    cl.focus();
+  }
+
   async function loadVideos() {
     var box = $('#vidMsg'), list = $('#vidList');
     if (!list) return;
     list.textContent = '';
     if (!sb) { say(box, 'bad', NO_SERVER); return; }
+    injectVideoCss();
 
     var res = await sb.from('videos').select('*').eq('published', true).order('created_at', { ascending: false });
     if (res.error) { say(box, 'bad', 'Could not load videos. ' + (res.error.message || '')); return; }
@@ -214,73 +343,26 @@
       var p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Recorded classes for your subjects appear here once your enrolment is confirmed. Book a class below, and we will confirm it within 24 hours.'; list.appendChild(p); return;
     }
 
+    list.className = 'yt-grid';
     res.data.forEach(function (v) {
-      var card = document.createElement('article'); card.className = 'card vid-card';
-      var frame = document.createElement('div'); frame.className = 'vid-frame';
-      if (v.embed_url) {
-        // Google Drive / YouTube link: show the player straight away
-        var fr = document.createElement('iframe');
-        fr.src = toEmbed(v.embed_url); fr.loading = 'lazy'; fr.title = v.title;
-        fr.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media'; fr.allowFullscreen = true;
-        fr.referrerPolicy = 'no-referrer';
-        fr.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
-        frame.appendChild(fr);
-      } else {
-        // Private file in Supabase Storage: link expires after 1 hour
-        var play = document.createElement('button'); play.type = 'button'; play.className = 'vid-play';
-        play.setAttribute('aria-label', 'Play ' + v.title); play.textContent = '▶';
-        frame.appendChild(play);
-        play.addEventListener('click', async function () {
-          play.disabled = true;
-          var sg = await sb.storage.from('videos').createSignedUrl(v.file_path, 3600);
-          if (sg.error || !sg.data) { play.disabled = false; say(box, 'bad', 'Could not open this video. Please log in again.'); return; }
-          var vd = document.createElement('video');
-          vd.src = sg.data.signedUrl; vd.controls = true; vd.autoplay = true; vd.playsInline = true;
-          vd.setAttribute('controlsList', 'nodownload'); vd.setAttribute('disablePictureInPicture', '');
-          vd.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-          play.remove(); frame.insertBefore(vd, frame.firstChild);
-        });
+      var card = document.createElement('button'); card.type = 'button'; card.className = 'yt-card';
+      card.setAttribute('aria-label', 'Play ' + v.title);
+      var th = document.createElement('div'); th.className = 'yt-thumb';
+      var src = thumbFor(v);
+      if (src) {
+        var im = document.createElement('img'); im.src = src; im.alt = ''; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer';
+        im.addEventListener('error', function () { im.remove(); });
+        th.appendChild(im);
       }
-
-      var body = document.createElement('div'); body.className = 'vid-body';
-      var t = document.createElement('h3'); t.className = 'h3'; t.textContent = v.title;
-      var d = document.createElement('p'); d.className = 'muted'; d.textContent = v.description || '';
-      body.appendChild(t); if (v.description) body.appendChild(d);
-      if (v.subject) { var sm = document.createElement('small'); sm.textContent = v.subject; body.appendChild(sm); }
-      // --- Deterrents: hide Drive's pop-out/share corner, block right-click, add a moving watermark ---
-      frame.style.userSelect = 'none';
-      frame.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-      if (v.embed_url) {
-        var shield = document.createElement('div'); shield.setAttribute('aria-hidden', 'true');
-        shield.style.cssText = 'position:absolute;top:0;right:0;width:76px;height:64px;z-index:3;background:transparent;cursor:default';
-        frame.appendChild(shield);
-      }
-      var wm = document.createElement('div'); wm.setAttribute('aria-hidden', 'true');
-      wm.textContent = (user.name || 'Student') + ' · ' + (user.email || '');
-      wm.style.cssText = 'position:absolute;z-index:4;pointer-events:none;color:#fff;opacity:.28;font:600 12px Inter,system-ui,sans-serif;text-shadow:0 0 3px #000;white-space:nowrap;transition:top 1.2s,left 1.2s;top:12%;left:8%';
-      frame.appendChild(wm);
-      setInterval(function () {
-        wm.style.top = (10 + Math.random() * 70) + '%';
-        wm.style.left = (4 + Math.random() * 45) + '%';
-      }, 6000);
-
-      // Optional full screen button
-      var fs = document.createElement('button'); fs.type = 'button'; fs.className = 'btn btn-ghost btn-sm';
-      fs.style.marginTop = '.7rem'; fs.textContent = '⛶ Full screen';
-      function exitFull() {
-        frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen';
-        if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
-      }
-      fs.addEventListener('click', function () {
-        if (frame.classList.contains('vid-full') || document.fullscreenElement === frame) { exitFull(); return; }
-        var req = frame.requestFullscreen || frame.webkitRequestFullscreen;
-        if (req) { try { var r = req.call(frame); if (r && r.catch) r.catch(function () { frame.classList.add('vid-full'); }); fs.textContent = '✕ Exit full screen'; return; } catch (e) { } }
-        frame.classList.add('vid-full'); fs.textContent = '✕ Exit full screen'; // iPhone fallback
-      });
-      document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) { frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen'; } });
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && frame.classList.contains('vid-full')) exitFull(); });
-      body.appendChild(document.createElement('br')); body.appendChild(fs);
-      card.appendChild(frame); card.appendChild(body); list.appendChild(card);
+      var pl = document.createElement('span'); pl.className = 'yt-play'; pl.textContent = '▶'; th.appendChild(pl);
+      if (v.subject) { var ch = document.createElement('span'); ch.className = 'yt-chip'; ch.textContent = v.subject; th.appendChild(ch); }
+      var info = document.createElement('div'); info.className = 'yt-info';
+      var t = document.createElement('div'); t.className = 'yt-title'; t.textContent = v.title;
+      var m = document.createElement('div'); m.className = 'yt-meta'; m.textContent = [v.subject, ago(v.created_at)].filter(Boolean).join(' · ');
+      info.appendChild(t); info.appendChild(m);
+      card.appendChild(th); card.appendChild(info);
+      card.addEventListener('click', function () { openPlayer(v, box); });
+      list.appendChild(card);
     });
   }
 
