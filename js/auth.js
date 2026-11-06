@@ -13,9 +13,9 @@
   if (link && hasFlag()) { link.textContent = 'My account'; link.setAttribute('href', 'account.html'); }
   var fl = $('[data-auth-footer]');
   if (fl && hasFlag()) { fl.textContent = 'My account'; fl.setAttribute('href', 'account.html'); }
-  if (link && (page === 'login' || page === 'register' || page === 'account')) link.setAttribute('aria-current', 'page');
+  if (link && (page === 'login' || page === 'register' || page === 'account' || page === 'videos')) link.setAttribute('aria-current', 'page');
 
-  if (page !== 'register' && page !== 'login' && page !== 'account') return;
+  if (page !== 'register' && page !== 'login' && page !== 'account' && page !== 'videos') return;
 
   var user = null;
   var sb = window.supabaseClient;
@@ -172,7 +172,55 @@
       if (res.error) { say(box, 'bad', friendly(res.error, 'Invalid email or password.')); return; }
 
       flag(true);
-      location.href = 'account.html';
+      var next = new URLSearchParams(location.search).get('next');
+      location.href = (next && /^[a-z0-9_-]+\.html$/i.test(next)) ? next : 'account.html';
+    });
+  }
+
+  // ---------- Members-only videos ----------
+  async function initVideos() {
+    var box = $('#vidMsg'), list = $('#vidList');
+    if (!user) { flag(false); location.replace('login.html?next=videos.html'); return; }
+    if (!sb) { say(box, 'bad', NO_SERVER); return; }
+
+    var res = await sb.from('videos').select('*').eq('published', true).order('created_at', { ascending: false });
+    if (res.error) { say(box, 'bad', 'Could not load videos. ' + (res.error.message || '')); return; }
+    if (!res.data || !res.data.length) {
+      var p = document.createElement('p'); p.className = 'muted'; p.textContent = 'No videos yet. Check back soon!'; list.appendChild(p); return;
+    }
+
+    res.data.forEach(function (v) {
+      var card = document.createElement('article'); card.className = 'card vid-card';
+      var frame = document.createElement('div'); frame.className = 'vid-frame';
+      var play = document.createElement('button'); play.type = 'button'; play.className = 'vid-play';
+      play.setAttribute('aria-label', 'Play ' + v.title); play.textContent = '▶';
+      frame.appendChild(play);
+
+      play.addEventListener('click', async function () {
+        play.disabled = true;
+        if (v.embed_url) {
+          // YouTube / Vimeo embed (unlisted). Only the page itself is gated.
+          var fr = document.createElement('iframe');
+          fr.src = v.embed_url; fr.allow = 'fullscreen; picture-in-picture; encrypted-media'; fr.allowFullscreen = true;
+          fr.referrerPolicy = 'strict-origin-when-cross-origin'; fr.title = v.title;
+          frame.textContent = ''; frame.appendChild(fr); return;
+        }
+        // Private file in Supabase Storage: a link that expires after 1 hour
+        var sg = await sb.storage.from('videos').createSignedUrl(v.file_path, 3600);
+        if (sg.error || !sg.data) { play.disabled = false; say(box, 'bad', 'Could not open this video. Please log in again.'); return; }
+        var vd = document.createElement('video');
+        vd.src = sg.data.signedUrl; vd.controls = true; vd.autoplay = true; vd.playsInline = true;
+        vd.setAttribute('controlsList', 'nodownload'); vd.setAttribute('disablePictureInPicture', '');
+        vd.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        frame.textContent = ''; frame.appendChild(vd);
+      });
+
+      var body = document.createElement('div'); body.className = 'vid-body';
+      var t = document.createElement('h3'); t.className = 'h3'; t.textContent = v.title;
+      var d = document.createElement('p'); d.className = 'muted'; d.textContent = v.description || '';
+      body.appendChild(t); if (v.description) body.appendChild(d);
+      if (v.subject) { var sm = document.createElement('small'); sm.textContent = v.subject; body.appendChild(sm); }
+      card.appendChild(frame); card.appendChild(body); list.appendChild(card);
     });
   }
 
@@ -280,5 +328,6 @@
     if (page === 'register') initRegister();
     else if (page === 'login') initLogin();
     else if (page === 'account') initAccount();
+    else if (page === 'videos') initVideos();
   });
 })();
