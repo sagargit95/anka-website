@@ -111,7 +111,7 @@
     injectCss();
 
     var video = null, iframe = null, raf = 0, hideT = 0, tapT = 0, lastTap = 0, wmT = 0, failT = 0;
-    var scrubbing = false, scrubP = 0, pushed = false, closed = false, cssFull = false, lastType = 'mouse';
+    var scrubbing = false, scrubP = 0, pushed = false, closed = false, cssFull = false, lastType = 'mouse', started = false;
 
     // ---------- structure ----------
     var modal = el('div', 'ap-modal');
@@ -273,12 +273,12 @@
       player.insertBefore(video, player.firstChild);
       player.classList.add('ap-custom', 'ap-ui', 'ap-loading');
       var on = function (ev, fn) { video.addEventListener(ev, function () { if (video) fn(); }); };
-      on('loadedmetadata', function () { clearTimeout(failT); paint(); setRate(); setVolIcon(); });
+      on('loadedmetadata', function () { paint(); setRate(); setVolIcon(); });
       on('durationchange', paint);
       on('timeupdate', function () { paint(); paintBuffer(); });
       on('progress', paintBuffer);
       on('play', function () { setPlayIcons(); showUI(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); });
-      on('playing', function () { player.classList.remove('ap-loading'); setPlayIcons(); showUI(); });
+      on('playing', function () { started = true; clearTimeout(failT); player.classList.remove('ap-loading'); setPlayIcons(); showUI(); });
       on('pause', function () { setPlayIcons(); showUI(); });
       on('ended', function () { setPlayIcons(); paint(); showUI(); });
       on('waiting', function () { player.classList.add('ap-loading'); });
@@ -286,9 +286,11 @@
       on('seeked', function () { player.classList.remove('ap-loading'); paintBuffer(); });
       on('volumechange', setVolIcon);
       on('ratechange', setRate);
-      on('error', fail);
+      on('error', function () { fail('media error ' + (video && video.error ? video.error.code : '?')); });
       setPlayIcons(); setVolIcon(); setRate(); syncFs();
-      failT = setTimeout(function () { if (video && video.readyState < 1) fail(); }, 12000);
+      // If the stream never gets going (blocked, throttled, wrong format), switch to the backup player
+      // instead of leaving a spinner. A video that is merely waiting for a tap to start has readyState >= 3.
+      failT = setTimeout(function () { if (video && !started && video.readyState < 3) fail('timeout, readyState ' + video.readyState); }, opts.startTimeout || 10000);
       video.src = url;
       var p = video.play();
       if (p && p.catch) p.catch(function () { player.classList.remove('ap-loading'); setPlayIcons(); showUI(); });
@@ -312,8 +314,9 @@
       player.classList.add('ap-embed');
     }
     function showMsg(t) { player.classList.remove('ap-loading'); msg.textContent = t; msg.hidden = false; }
-    function fail() {
+    function fail(why) {
       if (closed) return;
+      try { console.warn('[AnkaPlayer] direct playback failed (' + (why || 'unknown') + ')' + (opts.iframe ? ', using backup player' : '')); } catch (e) { }
       unmountVideo();
       if (opts.iframe && !iframe) mountIframe(opts.iframe);
       else showMsg('This video could not be played. Please check your connection and try again, or message us on WhatsApp.');
@@ -435,7 +438,7 @@
     if (opts.src) {
       var s = (typeof opts.src === 'function') ? opts.src() : opts.src;
       Promise.resolve(s).then(function (u) { if (closed) return; if (!u) throw new Error('no url'); mountVideo(u); })
-        .catch(function () { if (!closed) fail(); });
+        .catch(function () { if (!closed) fail('no stream url'); });
     } else if (opts.iframe) mountIframe(opts.iframe);
     else showMsg('This video is not available.');
   }
