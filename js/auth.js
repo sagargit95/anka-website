@@ -11,6 +11,12 @@
   // Header/Footer links for visitor vs student
   var link = $('[data-auth-link]');
   if (link && hasFlag()) { link.textContent = 'My account'; link.setAttribute('href', 'account.html'); }
+  if (link && hasFlag() && !$('[data-videos-link]')) {
+    var li = document.createElement('li'), va = document.createElement('a');
+    va.href = 'videos.html'; va.textContent = 'Videos'; va.setAttribute('data-videos-link', '');
+    if (page === 'videos') va.setAttribute('aria-current', 'page');
+    li.appendChild(va); link.parentNode.parentNode.insertBefore(li, link.parentNode);
+  }
   var fl = $('[data-auth-footer]');
   if (fl && hasFlag()) { fl.textContent = 'My account'; fl.setAttribute('href', 'account.html'); }
   if (link && (page === 'login' || page === 'register' || page === 'account' || page === 'videos')) link.setAttribute('aria-current', 'page');
@@ -177,6 +183,16 @@
     });
   }
 
+  // Turn a normal share link into an embeddable one (Google Drive, YouTube)
+  function toEmbed(url) {
+    url = (url || '').trim();
+    var m = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/) || url.match(/drive\.google\.com\/(?:open|uc)\?[^#]*id=([\w-]+)/);
+    if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview';
+    m = url.match(/(?:youtube\.com\/watch\?[^#]*v=|youtu\.be\/)([\w-]{11})/);
+    if (m) return 'https://www.youtube-nocookie.com/embed/' + m[1];
+    return url;
+  }
+
   // ---------- Members-only videos ----------
   async function initVideos() {
     var box = $('#vidMsg'), list = $('#vidList');
@@ -192,28 +208,29 @@
     res.data.forEach(function (v) {
       var card = document.createElement('article'); card.className = 'card vid-card';
       var frame = document.createElement('div'); frame.className = 'vid-frame';
-      var play = document.createElement('button'); play.type = 'button'; play.className = 'vid-play';
-      play.setAttribute('aria-label', 'Play ' + v.title); play.textContent = '▶';
-      frame.appendChild(play);
-
-      play.addEventListener('click', async function () {
-        play.disabled = true;
-        if (v.embed_url) {
-          // YouTube / Vimeo embed (unlisted). Only the page itself is gated.
-          var fr = document.createElement('iframe');
-          fr.src = v.embed_url; fr.allow = 'fullscreen; picture-in-picture; encrypted-media'; fr.allowFullscreen = true;
-          fr.referrerPolicy = 'strict-origin-when-cross-origin'; fr.title = v.title;
-          frame.textContent = ''; frame.appendChild(fr); return;
-        }
-        // Private file in Supabase Storage: a link that expires after 1 hour
-        var sg = await sb.storage.from('videos').createSignedUrl(v.file_path, 3600);
-        if (sg.error || !sg.data) { play.disabled = false; say(box, 'bad', 'Could not open this video. Please log in again.'); return; }
-        var vd = document.createElement('video');
-        vd.src = sg.data.signedUrl; vd.controls = true; vd.autoplay = true; vd.playsInline = true;
-        vd.setAttribute('controlsList', 'nodownload'); vd.setAttribute('disablePictureInPicture', '');
-        vd.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-        frame.textContent = ''; frame.appendChild(vd);
-      });
+      if (v.embed_url) {
+        // Google Drive / YouTube link: show the player straight away
+        var fr = document.createElement('iframe');
+        fr.src = toEmbed(v.embed_url); fr.loading = 'lazy'; fr.title = v.title;
+        fr.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media'; fr.allowFullscreen = true;
+        fr.referrerPolicy = 'no-referrer';
+        frame.appendChild(fr);
+      } else {
+        // Private file in Supabase Storage: link expires after 1 hour
+        var play = document.createElement('button'); play.type = 'button'; play.className = 'vid-play';
+        play.setAttribute('aria-label', 'Play ' + v.title); play.textContent = '▶';
+        frame.appendChild(play);
+        play.addEventListener('click', async function () {
+          play.disabled = true;
+          var sg = await sb.storage.from('videos').createSignedUrl(v.file_path, 3600);
+          if (sg.error || !sg.data) { play.disabled = false; say(box, 'bad', 'Could not open this video. Please log in again.'); return; }
+          var vd = document.createElement('video');
+          vd.src = sg.data.signedUrl; vd.controls = true; vd.autoplay = true; vd.playsInline = true;
+          vd.setAttribute('controlsList', 'nodownload'); vd.setAttribute('disablePictureInPicture', '');
+          vd.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+          frame.textContent = ''; frame.appendChild(vd);
+        });
+      }
 
       var body = document.createElement('div'); body.className = 'vid-body';
       var t = document.createElement('h3'); t.className = 'h3'; t.textContent = v.title;
