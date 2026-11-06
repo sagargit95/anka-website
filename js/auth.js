@@ -238,7 +238,7 @@
           vd.src = sg.data.signedUrl; vd.controls = true; vd.autoplay = true; vd.playsInline = true;
           vd.setAttribute('controlsList', 'nodownload'); vd.setAttribute('disablePictureInPicture', '');
           vd.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-          frame.textContent = ''; frame.appendChild(vd);
+          play.remove(); frame.insertBefore(vd, frame.firstChild);
         });
       }
 
@@ -247,6 +247,23 @@
       var d = document.createElement('p'); d.className = 'muted'; d.textContent = v.description || '';
       body.appendChild(t); if (v.description) body.appendChild(d);
       if (v.subject) { var sm = document.createElement('small'); sm.textContent = v.subject; body.appendChild(sm); }
+      // --- Deterrents: hide Drive's pop-out/share corner, block right-click, add a moving watermark ---
+      frame.style.userSelect = 'none';
+      frame.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      if (v.embed_url) {
+        var shield = document.createElement('div'); shield.setAttribute('aria-hidden', 'true');
+        shield.style.cssText = 'position:absolute;top:0;right:0;width:76px;height:64px;z-index:3;background:transparent;cursor:default';
+        frame.appendChild(shield);
+      }
+      var wm = document.createElement('div'); wm.setAttribute('aria-hidden', 'true');
+      wm.textContent = (user.name || 'Student') + ' · ' + (user.email || '');
+      wm.style.cssText = 'position:absolute;z-index:4;pointer-events:none;color:#fff;opacity:.28;font:600 12px Inter,system-ui,sans-serif;text-shadow:0 0 3px #000;white-space:nowrap;transition:top 1.2s,left 1.2s;top:12%;left:8%';
+      frame.appendChild(wm);
+      setInterval(function () {
+        wm.style.top = (10 + Math.random() * 70) + '%';
+        wm.style.left = (4 + Math.random() * 45) + '%';
+      }, 6000);
+
       // Optional full screen button
       var fs = document.createElement('button'); fs.type = 'button'; fs.className = 'btn btn-ghost btn-sm';
       fs.style.marginTop = '.7rem'; fs.textContent = '⛶ Full screen';
