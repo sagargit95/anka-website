@@ -195,8 +195,14 @@
 
   // ---------- Members-only videos ----------
   async function initVideos() {
-    var box = $('#vidMsg'), list = $('#vidList');
     if (!user) { flag(false); location.replace('login.html?next=videos.html'); return; }
+    return loadVideos();
+  }
+
+  async function loadVideos() {
+    var box = $('#vidMsg'), list = $('#vidList');
+    if (!list) return;
+    list.textContent = '';
     if (!sb) { say(box, 'bad', NO_SERVER); return; }
 
     var res = await sb.from('videos').select('*').eq('published', true).order('created_at', { ascending: false });
@@ -214,6 +220,7 @@
         fr.src = toEmbed(v.embed_url); fr.loading = 'lazy'; fr.title = v.title;
         fr.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media'; fr.allowFullscreen = true;
         fr.referrerPolicy = 'no-referrer';
+        fr.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
         frame.appendChild(fr);
       } else {
         // Private file in Supabase Storage: link expires after 1 hour
@@ -339,6 +346,7 @@
     }
 
     loadBookings();
+    loadVideos();
   }
 
   boot().catch(function () { }).then(function () {
