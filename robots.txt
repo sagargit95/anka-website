@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
-Disallow: /api/
 Disallow: /account.html
+Disallow: /videos.html
+Disallow: /login.html
+Disallow: /register.html
 Sitemap: https://nsagar.com.np/sitemap.xml
