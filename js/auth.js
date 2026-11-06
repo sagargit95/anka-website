@@ -243,8 +243,16 @@
     var y = Math.floor(mo / 12); return y + (y === 1 ? ' year ago' : ' years ago');
   }
 
+  // Load js/player.js on demand if the page did not include it (e.g. an older HTML file is cached or deployed)
+  function withPlayer(box, cb) {
+    if (window.AnkaPlayer) { cb(); return; }
+    var s = document.createElement('script'); s.src = 'js/player.js?v=20261106f';
+    s.onload = function () { if (window.AnkaPlayer) cb(); else say(box, 'bad', 'The video player did not load. Please refresh the page.'); };
+    s.onerror = function () { say(box, 'bad', 'Could not load the video player (js/player.js). Please refresh the page.'); };
+    document.head.appendChild(s);
+  }
+
   function openPlayer(v, box) {
-    if (!window.AnkaPlayer) { say(box, 'bad', 'The video player did not load. Please refresh the page.'); return; }
     var opts = {
       title: v.title,
       meta: [v.subject, ago(v.created_at)].filter(Boolean).join(' \u00b7 '),
@@ -265,7 +273,7 @@
         });
       };
     }
-    window.AnkaPlayer.open(opts);
+    withPlayer(box, function () { window.AnkaPlayer.open(opts); });
   }
 
   async function loadVideos() {
