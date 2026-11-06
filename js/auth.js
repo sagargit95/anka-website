@@ -224,6 +224,10 @@
       '.yt-player{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;width:min(100%,calc((100dvh - 150px)*16/9));margin-inline:auto}',
       '.yt-player iframe,.yt-player video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}',
       '.yt-player.vid-full{position:fixed;inset:0;z-index:7000;aspect-ratio:auto;width:100vw;height:100dvh;border-radius:0;margin:0}',
+      '.yt-pp{position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:68px;height:68px;border-radius:50%;border:0;background:rgba(0,0,0,.62);color:#fff;font-size:1.4rem;display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .25s;-webkit-tap-highlight-color:transparent}',
+      '.yt-pp.show{opacity:1}',
+      '.yt-bar{position:absolute;z-index:5;left:0;right:0;bottom:0;height:18px;cursor:pointer;touch-action:none;display:flex;align-items:flex-end}',
+      '.yt-bar-in{height:4px;width:0;background:var(--c1,#7c5cff);border-radius:0 2px 2px 0}',
       '.yt-under{color:#fff;padding:.9rem .2rem 0}',
       '.yt-under h3{font-size:1.15rem;line-height:1.35;margin:0 0 .3rem;color:#fff}',
       '.yt-under p{margin:.3rem 0 0;color:#cfcfd6;font-size:.92rem;overflow-wrap:anywhere}',
@@ -283,15 +287,45 @@
       fr.referrerPolicy = 'strict-origin-when-cross-origin';
       frame.appendChild(fr);
       var shield = document.createElement('div'); shield.setAttribute('aria-hidden', 'true');
-      shield.style.cssText = 'position:absolute;top:0;right:0;width:76px;height:64px;z-index:3;background:transparent';
+      shield.style.cssText = 'position:absolute;top:0;right:0;width:64px;height:56px;z-index:3;background:#000';
       frame.appendChild(shield);
     } else {
       sb.storage.from('videos').createSignedUrl(v.file_path, 3600).then(function (sg) {
         if (sg.error || !sg.data) { say(box, 'bad', 'Could not open this video. Please log in again.'); close(); return; }
         var vd = document.createElement('video');
-        vd.src = sg.data.signedUrl; vd.controls = true; vd.autoplay = true; vd.playsInline = true;
+        vd.src = sg.data.signedUrl; vd.playsInline = true; vd.preload = 'metadata';
         vd.setAttribute('controlsList', 'nodownload'); vd.setAttribute('disablePictureInPicture', '');
+        vd.disableRemotePlayback = true;
         frame.insertBefore(vd, frame.firstChild);
+
+        // one play/pause button on the video + a thin seek bar. No other controls.
+        var pp = document.createElement('button'); pp.type = 'button'; pp.className = 'yt-pp show';
+        pp.setAttribute('aria-label', 'Play or pause'); pp.textContent = '▶';
+        var bar = document.createElement('div'); bar.className = 'yt-bar';
+        var barIn = document.createElement('div'); barIn.className = 'yt-bar-in'; bar.appendChild(barIn);
+        frame.appendChild(pp); frame.appendChild(bar);
+
+        var hideT;
+        function sync() { pp.textContent = vd.paused ? '▶' : '❚❚'; }
+        function flash() {
+          pp.classList.add('show'); clearTimeout(hideT);
+          if (!vd.paused) hideT = setTimeout(function () { pp.classList.remove('show'); }, 900);
+        }
+        function toggle() { if (vd.paused) { var r = vd.play(); if (r && r.catch) r.catch(function () { }); } else vd.pause(); }
+        vd.addEventListener('play', function () { sync(); flash(); });
+        vd.addEventListener('pause', function () { sync(); pp.classList.add('show'); clearTimeout(hideT); });
+        vd.addEventListener('timeupdate', function () { if (vd.duration) barIn.style.width = (vd.currentTime / vd.duration * 100) + '%'; });
+        vd.addEventListener('click', function () { toggle(); flash(); });
+        pp.addEventListener('click', function (e) { e.stopPropagation(); toggle(); });
+        function seek(e) {
+          var r = bar.getBoundingClientRect();
+          if (vd.duration) vd.currentTime = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * vd.duration;
+        }
+        var dragging = false;
+        bar.addEventListener('pointerdown', function (e) { dragging = true; bar.setPointerCapture(e.pointerId); seek(e); e.stopPropagation(); });
+        bar.addEventListener('pointermove', function (e) { if (dragging) seek(e); });
+        bar.addEventListener('pointerup', function () { dragging = false; });
+        toggle();
       });
     }
     // moving watermark with the student's name
