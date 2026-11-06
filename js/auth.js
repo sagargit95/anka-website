@@ -219,15 +219,6 @@
       '.yt-title{font-weight:600;font-size:1rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}',
       '.yt-meta{color:var(--muted);font-size:.85rem;margin-top:.25rem}',
       '@media (max-width:600px){.yt-grid{grid-template-columns:minmax(0,1fr);gap:1.4rem}.yt-thumb{border-radius:12px}}',
-      '.yt-modal{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.88);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:max(12px,env(safe-area-inset-top)) 12px 24px}',
-      '.yt-box{width:min(100%,1000px)}',
-      '.yt-player{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;width:min(100%,calc((100dvh - 150px)*16/9));margin-inline:auto}',
-      '.yt-player iframe,.yt-player video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}',
-      '.yt-under{color:#fff;padding:.9rem .2rem 0}',
-      '.yt-under h3{font-size:1.15rem;line-height:1.35;margin:0 0 .3rem;color:#fff}',
-      '.yt-under p{margin:.3rem 0 0;color:#cfcfd6;font-size:.92rem;overflow-wrap:anywhere}',
-      '@media (max-width:600px){.yt-modal{padding:env(safe-area-inset-top,0px) 0 24px}.yt-player{width:100%;border-radius:0}.yt-under{padding:.8rem 14px 0}.yt-under h3{font-size:1.02rem}}',
-      '@media (max-height:480px) and (orientation:landscape){.yt-player{width:min(100%,calc((100dvh - 24px)*16/9))}.yt-under{display:none}}'
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -253,90 +244,28 @@
   }
 
   function openPlayer(v, box) {
-    var wmTimer = null, fr = null, shield = null, ro = null, pushed = false;
-    var modal = document.createElement('div'); modal.className = 'yt-modal';
-    modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-label', v.title);
-    var wrap = document.createElement('div'); wrap.className = 'yt-box';
-    var frame = document.createElement('div'); frame.className = 'yt-player';
-    frame.style.userSelect = 'none';
-    frame.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-
-    function close(fromPop) {
-      clearInterval(wmTimer);
-      if (ro) ro.disconnect();
-      window.removeEventListener('resize', fitControls);
-      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
-      document.removeEventListener('keydown', onKey);
-      window.removeEventListener('popstate', onPop);
-      document.documentElement.style.overflow = '';
-      modal.remove();
-      // closed by tap/Esc: drop the history entry we added so the Back button stays in step
-      if (pushed && fromPop !== true) { pushed = false; try { history.back(); } catch (e) { } }
-    }
-    function onKey(e) { if (e.key === 'Escape') close(); }
-    function onPop() { pushed = false; close(true); }
-
-    // Drive draws its own controls at a fixed pixel size, which looks huge on a phone.
-    // Render the embed at a "desktop" width (640px) and scale it down, so the controls
-    // shrink to a YouTube-like size. Full screen is Drive's own button and is unaffected.
-    function fitControls() {
-      if (!fr) return;
-      var w = frame.clientWidth; if (!w) return;
-      var s = Math.max(.5, Math.min(1, w / 640));
-      fr.style.width = (100 / s) + '%'; fr.style.height = (100 / s) + '%';
-      fr.style.transformOrigin = '0 0';
-      fr.style.transform = s < 1 ? 'scale(' + s + ')' : '';
-      if (shield) { shield.style.width = Math.round(76 * s) + 'px'; shield.style.height = Math.round(64 * s) + 'px'; }
-    }
-
-    // player
+    if (!window.AnkaPlayer) { say(box, 'bad', 'The video player did not load. Please refresh the page.'); return; }
+    var opts = {
+      title: v.title,
+      meta: [v.subject, ago(v.created_at)].filter(Boolean).join(' \u00b7 '),
+      description: v.description || '',
+      watermark: (user.name || 'Student') + ' \u00b7 ' + (user.email || '')
+    };
     if (v.embed_url) {
-      var fr = document.createElement('iframe');
-      fr.src = toEmbed(v.embed_url); fr.title = v.title;
-      fr.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media'; fr.allowFullscreen = true;
-      fr.referrerPolicy = 'no-referrer';
-      fr.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
-      frame.appendChild(fr);
-      var shield = document.createElement('div'); shield.setAttribute('aria-hidden', 'true');
-      shield.style.cssText = 'position:absolute;top:0;right:0;width:76px;height:64px;z-index:3;background:transparent';
-      frame.appendChild(shield);
-    } else {
-      sb.storage.from('videos').createSignedUrl(v.file_path, 3600).then(function (sg) {
-        if (sg.error || !sg.data) { say(box, 'bad', 'Could not open this video. Please log in again.'); close(); return; }
-        var vd = document.createElement('video');
-        vd.src = sg.data.signedUrl; vd.controls = true; vd.autoplay = true; vd.playsInline = true;
-        vd.setAttribute('controlsList', 'nodownload'); vd.setAttribute('disablePictureInPicture', '');
-        frame.insertBefore(vd, frame.firstChild);
-      });
+      opts.iframe = toEmbed(v.embed_url);
+      // Google Drive: play it in our own player (YouTube-style controls). If Drive will not stream the
+      // file directly, the player falls back to Drive's embedded player automatically.
+      var id = driveId(v.embed_url);
+      if (id) opts.src = 'https://drive.usercontent.google.com/download?id=' + id + '&export=download&confirm=t';
+    } else if (v.file_path) {
+      opts.src = function () {
+        return sb.storage.from('videos').createSignedUrl(v.file_path, 3600).then(function (sg) {
+          if (sg.error || !sg.data) throw new Error('signed url');
+          return sg.data.signedUrl;
+        });
+      };
     }
-    // moving watermark with the student's name
-    var wm = document.createElement('div'); wm.setAttribute('aria-hidden', 'true');
-    wm.textContent = (user.name || 'Student') + ' · ' + (user.email || '');
-    wm.style.cssText = 'position:absolute;z-index:4;pointer-events:none;color:#fff;opacity:.28;font:600 12px Inter,system-ui,sans-serif;text-shadow:0 0 3px #000;white-space:nowrap;transition:top 1.2s,left 1.2s;top:12%;left:8%';
-    frame.appendChild(wm);
-    wmTimer = setInterval(function () { wm.style.top = (10 + Math.random() * 70) + '%'; wm.style.left = (4 + Math.random() * 45) + '%'; }, 6000);
-
-    // text under the player
-    var under = document.createElement('div'); under.className = 'yt-under';
-    var h = document.createElement('h3'); h.textContent = v.title; under.appendChild(h);
-    var meta = [v.subject, ago(v.created_at)].filter(Boolean).join(' · ');
-    if (meta) { var mt = document.createElement('div'); mt.style.cssText = 'color:#a9a9b3;font-size:.85rem'; mt.textContent = meta; under.appendChild(mt); }
-    if (v.description) { var dp = document.createElement('p'); dp.textContent = v.description; under.appendChild(dp); }
-
-    wrap.appendChild(frame); wrap.appendChild(under); modal.appendChild(wrap);
-    modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
-    document.addEventListener('keydown', onKey);
-    document.documentElement.style.overflow = 'hidden';
-    // Attach to <html>, not <body>, so no transform/animation on body can offset this fixed overlay
-    document.documentElement.appendChild(modal);
-    modal.scrollTop = 0;
-
-    fitControls();
-    if (window.ResizeObserver) { ro = new ResizeObserver(fitControls); ro.observe(frame); }
-    else window.addEventListener('resize', fitControls);
-
-    // No close button: tap outside the player, press Esc, or use the phone's Back button
-    try { history.pushState({ ankaPlayer: 1 }, ''); pushed = true; window.addEventListener('popstate', onPop); } catch (e) { }
+    window.AnkaPlayer.open(opts);
   }
 
   async function loadVideos() {
