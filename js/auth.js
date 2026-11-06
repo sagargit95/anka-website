@@ -223,14 +223,10 @@
       '.yt-box{width:min(100%,1000px)}',
       '.yt-player{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;width:min(100%,calc((100dvh - 150px)*16/9));margin-inline:auto}',
       '.yt-player iframe,.yt-player video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}',
-      '.yt-player.vid-full{position:fixed;inset:0;z-index:7000;aspect-ratio:auto;width:100vw;height:100dvh;border-radius:0;margin:0}',
-      '.yt-fs{position:absolute;right:10px;bottom:10px;z-index:5;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:rgba(0,0,0,.6);color:#fff;border:1px solid rgba(255,255,255,.28);cursor:pointer;padding:0;transition:background .2s,transform .2s}',
-      '.yt-fs:hover{background:rgba(0,0,0,.85);transform:scale(1.08)}',
-      '.yt-fs:focus-visible{outline:2px solid var(--c2);outline-offset:2px}',
       '.yt-under{color:#fff;padding:.9rem .2rem 0}',
       '.yt-under h3{font-size:1.15rem;line-height:1.35;margin:0 0 .3rem;color:#fff}',
       '.yt-under p{margin:.3rem 0 0;color:#cfcfd6;font-size:.92rem;overflow-wrap:anywhere}',
-      '.yt-actions{display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap}',
+      '@media (max-width:600px){.yt-modal{padding:env(safe-area-inset-top,0px) 0 24px}.yt-player{width:100%;border-radius:0}.yt-under{padding:.8rem 14px 0}.yt-under h3{font-size:1.02rem}}',
       '@media (max-height:480px) and (orientation:landscape){.yt-player{width:min(100%,calc((100dvh - 24px)*16/9))}.yt-under{display:none}}'
     ].join('\n');
     document.head.appendChild(st);
@@ -257,7 +253,7 @@
   }
 
   function openPlayer(v, box) {
-    var wmTimer = null;
+    var wmTimer = null, fr = null, shield = null, ro = null, pushed = false;
     var modal = document.createElement('div'); modal.className = 'yt-modal';
     modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-label', v.title);
     var wrap = document.createElement('div'); wrap.className = 'yt-box';
@@ -265,26 +261,32 @@
     frame.style.userSelect = 'none';
     frame.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
-    function close() {
+    function close(fromPop) {
       clearInterval(wmTimer);
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', fitControls);
       if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
       document.removeEventListener('keydown', onKey);
-      document.removeEventListener('fullscreenchange', onFsChange);
+      window.removeEventListener('popstate', onPop);
       document.documentElement.style.overflow = '';
       modal.remove();
+      // closed by tap/Esc: drop the history entry we added so the Back button stays in step
+      if (pushed && fromPop !== true) { pushed = false; try { history.back(); } catch (e) { } }
     }
-    function onKey(e) { if (e.key === 'Escape') { if (frame.classList.contains('vid-full')) exitFull(); else close(); } }
-    function exitFull() {
-      frame.classList.remove('vid-full'); setFs(false);
-      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
-    }
-    function onFsChange() { if (!document.fullscreenElement) { frame.classList.remove('vid-full'); setFs(false); } }
-    var ICON_ENTER = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>';
-    var ICON_EXIT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/></svg>';
-    function setFs(on) {
-      fs.innerHTML = on ? ICON_EXIT : ICON_ENTER;
-      var t = on ? 'Exit full screen' : 'Full screen';
-      fs.setAttribute('aria-label', t); fs.title = t;
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    function onPop() { pushed = false; close(true); }
+
+    // Drive draws its own controls at a fixed pixel size, which looks huge on a phone.
+    // Render the embed at a "desktop" width (640px) and scale it down, so the controls
+    // shrink to a YouTube-like size. Full screen is Drive's own button and is unaffected.
+    function fitControls() {
+      if (!fr) return;
+      var w = frame.clientWidth; if (!w) return;
+      var s = Math.max(.5, Math.min(1, w / 640));
+      fr.style.width = (100 / s) + '%'; fr.style.height = (100 / s) + '%';
+      fr.style.transformOrigin = '0 0';
+      fr.style.transform = s < 1 ? 'scale(' + s + ')' : '';
+      if (shield) { shield.style.width = Math.round(76 * s) + 'px'; shield.style.height = Math.round(64 * s) + 'px'; }
     }
 
     // player
@@ -321,18 +323,6 @@
     if (meta) { var mt = document.createElement('div'); mt.style.cssText = 'color:#a9a9b3;font-size:.85rem'; mt.textContent = meta; under.appendChild(mt); }
     if (v.description) { var dp = document.createElement('p'); dp.textContent = v.description; under.appendChild(dp); }
 
-    // full screen button, bottom-right corner of the player (no close button: tap outside the player or press Esc)
-    var fs = document.createElement('button'); fs.type = 'button'; fs.className = 'yt-fs';
-    setFs(false);
-    fs.addEventListener('click', function () {
-      if (frame.classList.contains('vid-full') || document.fullscreenElement === frame) { exitFull(); return; }
-      var req = frame.requestFullscreen || frame.webkitRequestFullscreen;
-      if (req) { try { var r = req.call(frame); if (r && r.catch) r.catch(function () { frame.classList.add('vid-full'); setFs(true); }); setFs(true); return; } catch (e) { } }
-      frame.classList.add('vid-full'); setFs(true);
-    });
-    document.addEventListener('fullscreenchange', onFsChange);
-    frame.appendChild(fs);
-
     wrap.appendChild(frame); wrap.appendChild(under); modal.appendChild(wrap);
     modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
     document.addEventListener('keydown', onKey);
@@ -340,7 +330,13 @@
     // Attach to <html>, not <body>, so no transform/animation on body can offset this fixed overlay
     document.documentElement.appendChild(modal);
     modal.scrollTop = 0;
-    fs.focus({ preventScroll: true });
+
+    fitControls();
+    if (window.ResizeObserver) { ro = new ResizeObserver(fitControls); ro.observe(frame); }
+    else window.addEventListener('resize', fitControls);
+
+    // No close button: tap outside the player, press Esc, or use the phone's Back button
+    try { history.pushState({ ankaPlayer: 1 }, ''); pushed = true; window.addEventListener('popstate', onPop); } catch (e) { }
   }
 
   async function loadVideos() {
