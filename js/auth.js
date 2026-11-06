@@ -219,6 +219,16 @@
       '.yt-title{font-weight:600;font-size:1rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}',
       '.yt-meta{color:var(--muted);font-size:.85rem;margin-top:.25rem}',
       '@media (max-width:600px){.yt-grid{grid-template-columns:minmax(0,1fr);gap:1.4rem}.yt-thumb{border-radius:12px}}',
+      '.yt-modal{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.88);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:max(12px,env(safe-area-inset-top)) 12px 24px}',
+      '.yt-box{width:min(100%,1000px)}',
+      '.yt-player{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;width:min(100%,calc((100dvh - 150px)*16/9));margin-inline:auto}',
+      '.yt-player iframe,.yt-player video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}',
+      '.yt-player.vid-full{position:fixed;inset:0;z-index:7000;aspect-ratio:auto;width:100vw;height:100dvh;border-radius:0;margin:0}',
+      '.yt-under{color:#fff;padding:.9rem .2rem 0}',
+      '.yt-under h3{font-size:1.15rem;line-height:1.35;margin:0 0 .3rem;color:#fff}',
+      '.yt-under p{margin:.3rem 0 0;color:#cfcfd6;font-size:.92rem;overflow-wrap:anywhere}',
+      '.yt-actions{display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap}',
+      '@media (max-height:480px) and (orientation:landscape){.yt-player{width:min(100%,calc((100dvh - 24px)*16/9))}.yt-under{display:none}}'
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -243,37 +253,80 @@
     var y = Math.floor(mo / 12); return y + (y === 1 ? ' year ago' : ' years ago');
   }
 
-  // Load js/player.js on demand if the page did not include it (e.g. an older HTML file is cached or deployed)
-  function withPlayer(box, cb) {
-    if (window.AnkaPlayer) { cb(); return; }
-    var s = document.createElement('script'); s.src = 'js/player.js?v=20261106f';
-    s.onload = function () { if (window.AnkaPlayer) cb(); else say(box, 'bad', 'The video player did not load. Please refresh the page.'); };
-    s.onerror = function () { say(box, 'bad', 'Could not load the video player (js/player.js). Please refresh the page.'); };
-    document.head.appendChild(s);
-  }
-
   function openPlayer(v, box) {
-    var opts = {
-      title: v.title,
-      meta: [v.subject, ago(v.created_at)].filter(Boolean).join(' \u00b7 '),
-      description: v.description || '',
-      watermark: (user.name || 'Student') + ' \u00b7 ' + (user.email || '')
-    };
-    if (v.embed_url) {
-      opts.iframe = toEmbed(v.embed_url);
-      // Google Drive: play it in our own player (YouTube-style controls). If Drive will not stream the
-      // file directly, the player falls back to Drive's embedded player automatically.
-      var id = driveId(v.embed_url);
-      if (id) opts.src = 'https://drive.usercontent.google.com/download?id=' + id + '&export=download&confirm=t';
-    } else if (v.file_path) {
-      opts.src = function () {
-        return sb.storage.from('videos').createSignedUrl(v.file_path, 3600).then(function (sg) {
-          if (sg.error || !sg.data) throw new Error('signed url');
-          return sg.data.signedUrl;
-        });
-      };
+    var wmTimer = null;
+    var modal = document.createElement('div'); modal.className = 'yt-modal';
+    modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-label', v.title);
+    var wrap = document.createElement('div'); wrap.className = 'yt-box';
+    var frame = document.createElement('div'); frame.className = 'yt-player';
+    frame.style.userSelect = 'none';
+    frame.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    function close() {
+      clearInterval(wmTimer);
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
+      document.removeEventListener('keydown', onKey);
+      document.documentElement.style.overflow = '';
+      modal.remove();
     }
-    withPlayer(box, function () { window.AnkaPlayer.open(opts); });
+    function onKey(e) { if (e.key === 'Escape') { if (frame.classList.contains('vid-full')) exitFull(); else close(); } }
+    function exitFull() {
+      frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen';
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { });
+    }
+
+    // player
+    if (v.embed_url) {
+      var fr = document.createElement('iframe');
+      fr.src = toEmbed(v.embed_url); fr.title = v.title;
+      fr.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media'; fr.allowFullscreen = true;
+      fr.referrerPolicy = 'strict-origin-when-cross-origin';
+      frame.appendChild(fr);
+      var shield = document.createElement('div'); shield.setAttribute('aria-hidden', 'true');
+      shield.style.cssText = 'position:absolute;top:0;right:0;width:76px;height:64px;z-index:3;background:transparent';
+      frame.appendChild(shield);
+    } else {
+      sb.storage.from('videos').createSignedUrl(v.file_path, 3600).then(function (sg) {
+        if (sg.error || !sg.data) { say(box, 'bad', 'Could not open this video. Please log in again.'); close(); return; }
+        var vd = document.createElement('video');
+        vd.src = sg.data.signedUrl; vd.controls = true; vd.autoplay = true; vd.playsInline = true;
+        vd.setAttribute('controlsList', 'nodownload'); vd.setAttribute('disablePictureInPicture', '');
+        frame.insertBefore(vd, frame.firstChild);
+      });
+    }
+    // moving watermark with the student's name
+    var wm = document.createElement('div'); wm.setAttribute('aria-hidden', 'true');
+    wm.textContent = (user.name || 'Student') + ' · ' + (user.email || '');
+    wm.style.cssText = 'position:absolute;z-index:4;pointer-events:none;color:#fff;opacity:.28;font:600 12px Inter,system-ui,sans-serif;text-shadow:0 0 3px #000;white-space:nowrap;transition:top 1.2s,left 1.2s;top:12%;left:8%';
+    frame.appendChild(wm);
+    wmTimer = setInterval(function () { wm.style.top = (10 + Math.random() * 70) + '%'; wm.style.left = (4 + Math.random() * 45) + '%'; }, 6000);
+
+    // text under the player
+    var under = document.createElement('div'); under.className = 'yt-under';
+    var h = document.createElement('h3'); h.textContent = v.title; under.appendChild(h);
+    var meta = [v.subject, ago(v.created_at)].filter(Boolean).join(' · ');
+    if (meta) { var mt = document.createElement('div'); mt.style.cssText = 'color:#a9a9b3;font-size:.85rem'; mt.textContent = meta; under.appendChild(mt); }
+    if (v.description) { var dp = document.createElement('p'); dp.textContent = v.description; under.appendChild(dp); }
+
+    var actions = document.createElement('div'); actions.className = 'yt-actions';
+    var fs = document.createElement('button'); fs.type = 'button'; fs.className = 'btn btn-ghost btn-sm'; fs.textContent = '⛶ Full screen';
+    fs.addEventListener('click', function () {
+      if (frame.classList.contains('vid-full') || document.fullscreenElement === frame) { exitFull(); return; }
+      var req = frame.requestFullscreen || frame.webkitRequestFullscreen;
+      if (req) { try { var r = req.call(frame); if (r && r.catch) r.catch(function () { frame.classList.add('vid-full'); }); fs.textContent = '✕ Exit full screen'; return; } catch (e) { } }
+      frame.classList.add('vid-full'); fs.textContent = '✕ Exit full screen';
+    });
+    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) { frame.classList.remove('vid-full'); fs.textContent = '⛶ Full screen'; } });
+    var cl = document.createElement('button'); cl.type = 'button'; cl.className = 'btn btn-ghost btn-sm'; cl.textContent = '✕ Close';
+    cl.addEventListener('click', close);
+    actions.appendChild(fs); actions.appendChild(cl); under.appendChild(actions);
+
+    wrap.appendChild(frame); wrap.appendChild(under); modal.appendChild(wrap);
+    modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+    document.addEventListener('keydown', onKey);
+    document.documentElement.style.overflow = 'hidden';
+    document.body.appendChild(modal);
+    cl.focus();
   }
 
   async function loadVideos() {
