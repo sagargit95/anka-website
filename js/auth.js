@@ -208,7 +208,7 @@
     var res = await sb.from('videos').select('*').eq('published', true).order('created_at', { ascending: false });
     if (res.error) { say(box, 'bad', 'Could not load videos. ' + (res.error.message || '')); return; }
     if (!res.data || !res.data.length) {
-      var p = document.createElement('p'); p.className = 'muted'; p.textContent = 'No videos yet. Check back soon!'; list.appendChild(p); return;
+      var p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Recorded classes for your subjects appear here once your enrolment is confirmed. Book a class below, and we will confirm it within 24 hours.'; list.appendChild(p); return;
     }
 
     res.data.forEach(function (v) {
